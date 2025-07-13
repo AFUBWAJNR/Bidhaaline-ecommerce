@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bidhaaline E-commerce System</title>
+    <link rel="stylesheet" href="Bidhaaline.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Home Page -->
+        <div id="homePage" class="page active">
+            <!-- Header -->
+            <header class="header">
+                <div class="container">
+                    <h1 class="logo" onclick="showPage('home')">Bidhaaline</h1>
+                    <nav class="nav">
+                        <button onclick="showPage('home')" class="nav-btn">Home</button>
+                        <button onclick="showPage('inquiry')" class="nav-btn">Inquiry</button>
+                        <button onclick="showPage('loginType')" class="login-btn">Login</button>
+                    </nav>
+                </div>
+            </header>
+
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="container">
+                    <h2 class="hero-title">Welcome to Bidhaaline</h2>
+                    <p class="hero-subtitle">Your trusted e-commerce platform for quality products</p>
+                    <button onclick="showPage('loginType')" class="hero-btn">Get Started</button>
+                </div>
+            </section>
+
+            <!-- Featured Products -->
+            <section class="products-section">
+                <div class="container">
+                    <h3 class="section-title">Featured Products</h3>
+                    <div id="featuredProducts" class="products-grid"></div>
+                </div>
+            </section>
+
+            <!-- Quick Contact -->
+            <section class="quick-contact">
+                <div class="container">
+                    <h3 class="section-title">Need Help?</h3>
+                    <p class="section-subtitle">Contact us for any inquiries</p>
+                    <button onclick="showPage('inquiry')" class="contact-btn">Contact Us</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Login Type Selection Page -->
+        <div id="loginTypePage" class="page">
+            <div class="login-type-container">
+                <div class="login-type-card">
+                    <h2 class="login-type-title">Choose Login Type</h2>
+                    <p class="login-type-subtitle">Select how you want to access Bidhaaline</p>
+                    
+                    <div class="login-options">
+                        <div class="login-option customer" onclick="showLoginForm('customer')">
+                            <div class="option-icon">👥</div>
+                            <h3>Customer Login</h3>
+                            <p>Shop and manage your orders</p>
+                        </div>
+                        
+                        <div class="login-option admin" onclick="showLoginForm('admin')">
+                            <div class="option-icon">🛡️</div>
+                            <h3>Admin Login</h3>
+                            <p>Manage products and orders</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="showPage('home')" class="back-btn">← Back to Home</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Page -->
+        <div id="loginPage" class="page">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-header">
+                        <h2 class="login-title">Bidhaaline</h2>
+                        <p id="loginSubtitle" class="login-subtitle">Welcome Back</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" class="login-form">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="loginEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" required placeholder="Enter your password">
+                        </div>
+                        <button type="submit" id="loginSubmitBtn" class="submit-btn">Login</button>
+                        <p id="registerLink" class="register-link">
+                            Don't have an account? 
+                            <button type="button" onclick="toggleRegister()" class="link-btn">Register</button>
+                        </p>
+                        <div id="demoCredentials" class="demo-info">
+                            <p>Demo Admin: admin@bidhaaline.com / admin123</p>
+                            <p>Demo User: user@example.com / password</p>
+                        </div>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form id="registerForm" class="register-form hidden">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="registerName" required placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="registerEmail" required placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="registerPhone" required placeholder="Enter your phone number">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="registerPassword" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" id="confirmPassword" required placeholder="Confirm your password">
+                        </div>
+                        <button type="submit" class="submit-btn">Register</button>
+                        <p class="register-link">
+                            Already have an account? 
+                            <button type="button" onclick="toggleRegister()" class="link-btn">Login</button>
+                        </p>
+                    </form>
+
+                    <div class="back-to-home">
+                        <button onclick="showPage('loginType')" class="back-btn">← Back to Login Type</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inquiry Page -->
+        <div id="inquiryPage" class="page">
+            <header class="header">
+                <div class="container">
+                    <h1 class="logo" onclick="showPage('home')">Bidhaaline</h1>
+                    <nav class="nav">
+                        <button onclick="showPage('home')" class="nav-btn">Home</button>
+                        <button onclick="showPage('inquiry')" class="nav-btn active">Inquiry</button>
+                        <button onclick="showPage('loginType')" class="login-btn">Login</button>
+                    </nav>
+                </div>
+            </header>
+
+            <div class="container inquiry-container">
+                <h2 class="page-title">Contact & Inquiry</h2>
+                
+                <div class="inquiry-grid">
+                    <!-- Contact Information -->
+                    <div class="contact-info">
+                        <h3 class="contact-title">Get in Touch</h3>
+                        
+                        <!-- Phone Numbers -->
+                        <div class="contact-section">
+                            <div class="contact-header">
+                                <span class="contact-icon">📞</span>
+                                <h4>Phone Numbers</h4>
+                            </div>
+                            <div class="phone-list">
+                                <div class="phone-item">
+                                    <span>0796436604</span>
+                                    <a href="tel:0796436604" class="phone-link">📞</a>
+                                </div>
+                                <div class="phone-item">
+                                    <span>0769772250</span>
+                                    <a href="tel:0769772250" class="phone-link">📞</a>
+                                </div>
+                                <div class="phone-item">
+                                    <span>0798160091</span>
+                                    <a href="tel:0798160091" class="phone-link">📞</a>
+                                </div>
+                                <div class="phone-item">
+                                    <span>0740204981 (M-Pesa)</span>
+                                    <a href="tel:0740204981" class="phone-link">📞</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="contact-section">
+                            <div class="contact-header">
+                                <span class="contact-icon">📧</span>
+                                <h4>Email</h4>
+                            </div>
+                            <div class="contact-content">
+                                <a href="mailto:info@bidhaaline.com" class="email-link">info@bidhaaline.com</a>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="contact-section">
+                            <div class="contact-header">
+                                <span class="contact-icon">📍</span>
+                                <h4>Address</h4>
+                            </div>
+                            <div class="contact-content">
+                                <p>Nairobi, Kenya</p>
+                            </div>
+                        </div>
+
+                        <!-- Business Hours -->
+                        <div class="contact-section">
+                            <div class="contact-header">
+                                <span class="contact-icon">🕒</span>
+                                <h4>Business Hours</h4>
+                            </div>
+                            <div class="contact-content">
+                                <p>Mon-Fri: 8AM-6PM, Sat: 9AM-4PM</p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Contact Buttons -->
+                        <div class="quick-contact-buttons">
+                            <a href="tel:0796436604" class="quick-btn call-btn">
+                                📞 Call Now
+                            </a>
+                            <a href="mailto:info@bidhaaline.com" class="quick-btn email-btn">
+                                📧 Send Email
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Inquiry Form -->
+                    <div class="inquiry-form-container">
+                        <h3 class="form-title">Send us a Message</h3>
+                        
+                        <form id="inquiryForm" class="inquiry-form">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" id="inquiryName" required placeholder="Enter your full name">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email Address *</label>
+                                <input type="email" id="inquiryEmail" required placeholder="Enter your email address">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Phone Number *</label>
+                                <input type="tel" id="inquiryPhone" required placeholder="Enter your phone number">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Subject *</label>
+                                <select id="inquirySubject" required>
+                                    <option value="">Select inquiry type</option>
+                                    <option value="product">Product Inquiry</option>
+                                    <option value="order">Order Support</option>
+                                    <option value="technical">Technical Support</option>
+                                    <option value="partnership">Partnership</option>
+                                    <option value="general">General Inquiry</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Order ID (Optional)</label>
+                                <input type="text" id="inquiryOrderId" placeholder="Enter order ID if inquiry is about an order">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Message *</label>
+                                <textarea id="inquiryMessage" rows="5" required placeholder="Enter your message or inquiry details"></textarea>
+                            </div>
+
+                            <button type="submit" class="submit-btn">
+                                📤 Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Dashboard -->
+        <div id="dashboardPage" class="page">
+            <header class="dashboard-header">
+                <div class="container">
+                    <h1 class="logo">Bidhaaline Dashboard</h1>
+                    <div class="header-actions">
+                        <button onclick="toggleCart()" class="cart-btn">
+                            🛒 <span id="cartCount" class="cart-count">0</span>
+                        </button>
+                        <span id="welcomeUser" class="welcome-text">Welcome, User</span>
+                        <button onclick="logout()" class="logout-btn">🚪 Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container dashboard-container">
+                <div class="dashboard-layout">
+                    <div class="sidebar">
+                        <nav class="sidebar-nav">
+                            <button onclick="showDashboardTab('products')" class="sidebar-btn active" data-tab="products">Products</button>
+                            <button onclick="showDashboardTab('orders')" class="sidebar-btn" data-tab="orders">My Orders</button>
+                            <button onclick="showDashboardTab('tracking')" class="sidebar-btn" data-tab="tracking">Track Order</button>
+                            <button onclick="showDashboardTab('profile')" class="sidebar-btn" data-tab="profile">Profile</button>
+                        </nav>
+                    </div>
+
+                    <div class="main-content">
+                        <!-- Products Tab -->
+                        <div id="productsTab" class="tab-content active">
+                            <h3 class="tab-title">Products</h3>
+                            <div class="search-filter-section">
+                                <div class="search-bar">
+                                    <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()">
+                                </div>
+                                <div class="filter-section">
+                                    <select id="categoryFilter" onchange="filterProducts()">
+                                        <option value="">All Categories</option>
+                                        <option value="Electronics">Electronics</option>
+                                        <option value="Fashion">Fashion</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Food">Food</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="allProducts" class="products-grid"></div>
+                        </div>
+
+                        <!-- Orders Tab -->
+                        <div id="ordersTab" class="tab-content">
+                            <h3 class="tab-title">My Orders</h3>
+                            <div id="ordersList" class="orders-list"></div>
+                        </div>
+
+                        <!-- Order Tracking Tab -->
+                        <div id="trackingTab" class="tab-content">
+                            <h3 class="tab-title">Track Your Order</h3>
+                            <div class="tracking-section">
+                                <div class="tracking-form">
+                                    <div class="form-group">
+                                        <label>Enter Order ID</label>
+                                        <input type="text" id="trackingOrderId" placeholder="Enter your order ID (e.g., ORD123456)">
+                                    </div>
+                                    <button onclick="trackOrderById()" class="submit-btn">Track Order</button>
+                                </div>
+                                <div id="trackingResult" class="tracking-result"></div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Tab -->
+                        <div id="profileTab" class="tab-content">
+                            <h3 class="tab-title">Profile Settings</h3>
+                            <form id="profileForm" class="profile-form">
+                                <div class="form-group">
+                                    <label>Name</label>
+                                    <input type="text" id="profileName" placeholder="Enter your name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="profileEmail" placeholder="Enter your email">
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone</label>
+                                    <input type="tel" id="profilePhone" placeholder="Enter your phone">
+                                </div>
+                                <div class="form-group">
+                                    <label>Address</label>
+                                    <textarea id="profileAddress" rows="3" placeholder="Enter your delivery address"></textarea>
+                                </div>
+                                <button type="submit" class="submit-btn">Update Profile</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Sidebar -->
+            <div id="cartSidebar" class="cart-sidebar">
+                <div class="cart-content">
+                    <div class="cart-header">
+                        <h3>Shopping Cart</h3>
+                        <button onclick="toggleCart()" class="close-btn">✕</button>
+                    </div>
+                    
+                    <div id="cartItems" class="cart-items"></div>
+                    
+                    <div id="cartFooter" class="cart-footer">
+                        <div class="cart-total">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">KSh 0</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Tax (16%):</span>
+                                <span id="tax">KSh 0</span>
+                            </div>
+                            <div class="total-row total">
+                                <span>Total:</span>
+                                <span id="total">KSh 0</span>
+                            </div>
+                        </div>
+                        <button onclick="showPaymentModal()" class="place-order-btn">Proceed to Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminPage" class="page">
+            <header class="dashboard-header">
+                <div class="container">
+                    <h1 class="logo">Admin Dashboard</h1>
+                    <div class="header-actions">
+                        <span class="welcome-text">Admin Panel</span>
+                        <button onclick="logout()" class="logout-btn">🚪 Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container dashboard-container">
+                <div class="dashboard-layout">
+                    <div class="sidebar">
+                        <nav class="sidebar-nav">
+                            <button onclick="showAdminTab('overview')" class="sidebar-btn active" data-tab="overview">Overview</button>
+                            <button onclick="showAdminTab('products')" class="sidebar-btn" data-tab="products">Manage Products</button>
+                            <button onclick="showAdminTab('orders')" class="sidebar-btn" data-tab="orders">Orders</button>
+                            <button onclick="showAdminTab('tracking')" class="sidebar-btn" data-tab="tracking">Order Tracking</button>
+                            <button onclick="showAdminTab('customers')" class="sidebar-btn" data-tab="customers">Customers</button>
+                        </nav>
+                    </div>
+
+                    <div class="main-content">
+                        <!-- Overview Tab -->
+                        <div id="overviewTab" class="tab-content active">
+                            <h3 class="tab-title">Overview</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <h4>Total Products</h4>
+                                    <p id="totalProducts" class="stat-number">0</p>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Total Orders</h4>
+                                    <p id="totalOrders" class="stat-number">0</p>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Revenue</h4>
+                                    <p id="totalRevenue" class="stat-number">KSh 0</p>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Pending Orders</h4>
+                                    <p id="pendingOrders" class="stat-number">0</p>
+                                </div>
+                            </div>
+                            
+                            <div class="recent-activity">
+                                <h4>Recent Orders</h4>
+                                <div id="recentOrdersList" class="recent-orders"></div>
+                            </div>
+                        </div>
+
+                        <!-- Products Management Tab -->
+                        <div id="adminProductsTab" class="tab-content">
+                            <h3 class="tab-title">Product Management</h3>
+                            
+                            <!-- Add Product Form -->
+                            <div class="add-product-section">
+                                <h4>Add New Product</h4>
+                                <form id="addProductForm" class="add-product-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Product Name *</label>
+                                            <input type="text" id="productName" required placeholder="Enter product name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Price (KSh) *</label>
+                                            <input type="number" id="productPrice" required placeholder="Enter price in KSh" min="1">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Category *</label>
+                                            <select id="productCategory" required>
+                                                <option value="">Select category</option>
+                                                <option value="Electronics">Electronics</option>
+                                                <option value="Fashion">Fashion</option>
+                                                <option value="Sports">Sports</option>
+                                                <option value="Home">Home</option>
+                                                <option value="Food">Food</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Stock Quantity *</label>
+                                            <input type="number" id="productStock" required placeholder="Enter stock quantity" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Product Description</label>
+                                        <textarea id="productDescription" rows="3" placeholder="Enter product description"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Image URL *</label>
+                                        <input type="url" id="productImage" required placeholder="Enter image URL">
+                                    </div>
+                                    <button type="submit" class="submit-btn">Add Product</button>
+                                </form>
+                            </div>
+
+                            <!-- Product List -->
+                            <div class="product-management-section">
+                                <h4>Current Products</h4>
+                                <div class="product-filters">
+                                    <input type="text" id="adminProductSearch" placeholder="Search products..." onkeyup="filterAdminProducts()">
+                                    <select id="adminCategoryFilter" onchange="filterAdminProducts()">
+                                        <option value="">All Categories</option>
+                                        <option value="Electronics">Electronics</option>
+                                        <option value="Fashion">Fashion</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Food">Food</option>
+                                    </select>
+                                </div>
+                                <div id="adminProductsList" class="admin-products-grid"></div>
+                            </div>
+                        </div>
+
+                        <!-- Orders Management Tab -->
+                        <div id="adminOrdersTab" class="tab-content">
+                            <h3 class="tab-title">Order Management</h3>
+                            <div class="order-filters">
+                                <select id="orderStatusFilter" onchange="filterOrders()">
+                                    <option value="">All Orders</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                                <input type="text" id="orderSearchInput" placeholder="Search by Order ID or Customer..." onkeyup="filterOrders()">
+                            </div>
+                            <div id="adminOrdersList" class="orders-list"></div>
+                        </div>
+
+                        <!-- Admin Order Tracking Tab -->
+                        <div id="adminTrackingTab" class="tab-content">
+                            <h3 class="tab-title">Order Tracking Management</h3>
+                            <div class="tracking-section">
+                                <div class="tracking-form">
+                                    <div class="form-group">
+                                        <label>Enter Order ID</label>
+                                        <input type="text" id="adminTrackingOrderId" placeholder="Enter order ID to track">
+                                    </div>
+                                    <button onclick="adminTrackOrder()" class="submit-btn">Track Order</button>
+                                </div>
+                                <div id="adminTrackingResult" class="tracking-result"></div>
+                            </div>
+                            
+                            <div class="bulk-tracking-section">
+                                <h4>All Orders Tracking Overview</h4>
+                                <div id="allOrdersTracking" class="tracking-overview"></div>
+                            </div>
+                        </div>
+
+                        <!-- Customers Tab -->
+                        <div id="customersTab" class="tab-content">
+                            <h3 class="tab-title">Customer Management</h3>
+                            <div id="customersList" class="customers-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="paymentModal" class="payment-modal hidden">
+            <div class="payment-content">
+                <div class="payment-header">
+                    <h3 class="payment-title">Payment Options</h3>
+                    <button onclick="hidePaymentModal()" class="close-btn">✕</button>
+                </div>
+
+                <div class="payment-methods">
+                    <div class="payment-method selected" onclick="selectPaymentMethod('mpesa')">
+                        <div class="payment-icon mpesa-icon">📱</div>
+                        <div>
+                            <h4>M-Pesa Payment</h4>
+                            <p>Pay with your mobile money</p>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-method" onclick="selectPaymentMethod('card')">
+                        <div class="payment-icon card-icon">💳</div>
+                        <div>
+                            <h4>Card Payment</h4>
+                            <p>Pay with credit/debit card</p>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-method" onclick="selectPaymentMethod('cash')">
+                        <div class="payment-icon cash-icon">💰</div>
+                        <div>
+                            <h4>Cash on Delivery</h4>
+                            <p>Pay when you receive your order</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="paymentDetails" class="payment-details">
+                    <div class="mpesa-info">
+                        <div class="mpesa-account">M-Pesa Account: 0740204981</div>
+                        <div class="payment-instructions">
+                            <strong>Payment Instructions:</strong>
+                            <ol>
+                                <li>Go to M-Pesa on your phone</li>
+                                <li>Select "Lipa na M-Pesa"</li>
+                                <li>Select "Pay Bill"</li>
+                                <li>Enter Business Number: <strong>0740204981</strong></li>
+                                <li>Enter Account Number: Your Order ID</li>
+                                <li>Enter Amount: <span id="paymentAmount">KSh 0</span></li>
+                                <li>Enter your M-Pesa PIN</li>
+                                <li>Confirm payment</li>
+                            </ol>
+                            <p><strong>Note:</strong> After payment, click "Confirm Payment" below and enter the M-Pesa transaction code.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>M-Pesa Transaction Code (Optional)</label>
+                        <input type="text" id="transactionCode" placeholder="Enter M-Pesa transaction code">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Customer Phone Number *</label>
+                        <input type="tel" id="customerPhone" required placeholder="Enter your phone number for M-Pesa">
+                    </div>
+                </div>
+
+                <button onclick="confirmPayment()" class="confirm-payment-btn">Confirm Payment</button>
+            </div>
+        </div>
+
+        <!-- Order Details Modal -->
+        <div id="orderDetailsModal" class="payment-modal hidden">
+            <div class="payment-content">
+                <div class="payment-header">
+                    <h3 class="payment-title">Order Details</h3>
+                    <button onclick="hideOrderDetailsModal()" class="close-btn">✕</button>
+                </div>
+                <div id="orderDetailsContent" class="order-details-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="Bidhaaline.js"></script>
+</body>
+</html>
