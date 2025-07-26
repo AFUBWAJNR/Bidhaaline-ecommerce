@@ -24,12 +24,16 @@ const createProduct = async (req, res, next) => {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
         res.status(201).json({
             status: 'success',
             message: 'Product created successfully',
-            data: { product }
+            data: {
+                product: product
+            }
         });
     } catch (error) {
         next(error);
@@ -43,19 +47,32 @@ const updateProduct = async (req, res, next) => {
 
         const { data: product, error } = await supabase
             .from('products')
-            .update({ name, description, price, category, stock, image_url })
+            .update({
+                name,
+                description,
+                price,
+                category,
+                stock,
+                image_url,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', id)
             .select()
             .single();
 
-        if (error) throw error;
-
-        if (!product) return res.status(404).json({ status: 'error', message: 'Product not found' });
+        if (error || !product) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Product not found'
+            });
+        }
 
         res.status(200).json({
             status: 'success',
             message: 'Product updated successfully',
-            data: { product }
+            data: {
+                product: product
+            }
         });
     } catch (error) {
         next(error);
@@ -73,9 +90,12 @@ const deleteProduct = async (req, res, next) => {
             .select('id')
             .single();
 
-        if (error) throw error;
-
-        if (!product) return res.status(404).json({ status: 'error', message: 'Product not found' });
+        if (error || !product) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Product not found'
+            });
+        }
 
         res.status(200).json({
             status: 'success',
@@ -86,116 +106,53 @@ const deleteProduct = async (req, res, next) => {
     }
 };
 
-// - getAllOrders
-
+// Order Management
 const getAllOrders = async (req, res, next) => {
     try {
         const { status, search, page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
-        let query = supabase
+        let ordersQuery = supabase
             .from('orders')
-            .select(`
-                *,
-                order_items (
-                    id, product_id, product_name, product_price, quantity, total_price
-                )`
-            )
+            .select('*')
             .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+            .range(offset, offset + parseInt(limit) - 1);
 
         if (status) {
-            query = query.eq('status', status);
+            ordersQuery = ordersQuery.eq('status', status);
         }
 
         if (search) {
-            query = query.or(`id.ilike.*${search}*,customer_name.ilike.*${search}*,customer_email.ilike.*${search}*`);
+            ordersQuery = ordersQuery.or(`id.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`);
         }
 
-        const { data: orders, error } = await query;
+        const { data: orders, error: ordersError } = await ordersQuery;
 
-        if (error) throw error;
+        if (ordersError) {
+            throw ordersError;
+        }
 
-        res.status(200).json({
-            status: 'success',
-            data: { orders }
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+        // Get order items for each order
+        const ordersWithItems = await Promise.all(
+            orders.map(async (order) => {
+                const { data: items, error: itemsError } = await supabase
+                    .from('order_items')
+                    .select('*')
+                    .eq('order_id', order.id);
 
-// - updateOrderStatus
-const updateOrderStatus = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
+                if (itemsError) {
+                    console.error('Error fetching order items:', itemsError);
+                    return { ...order, items: [] };
+                }
 
-        const { data: order, error: updateError } = await supabase
-            .from('orders')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (updateError) throw updateError;
-        if (!order) return res.status(404).json({ status: 'error', message: 'Order not found' });
-
-        // Add tracking description
-        const statusDescriptions = {
-            Confirmed: 'Your order has been confirmed and is being prepared',
-            Shipped: 'Your order has been shipped and is on its way',
-            Delivered: 'Your order has been delivered successfully',
-            Cancelled: 'Your order has been cancelled'
-        };
-
-        const description = statusDescriptions[status] || `Order status updated to ${status}`;
-
-        const { error: trackingError } = await supabase
-            .from('order_tracking')
-            .insert([{ order_id: id, status, description }]);
-
-        if (trackingError) throw trackingError;
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Order status updated successfully',
-            data: { order }
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-
-// - getDashboardStats
-const getDashboardStats = async (req, res, next) => {
-    try {
-        const [{ data: products }, { data: orders }, { data: revenue }, { data: pending }, { data: recent }] =
-            await Promise.all([
-                supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-                supabase.from('orders').select('id', { count: 'exact', head: true }),
-                supabase.from('orders').select('total_amount').neq('status', 'Cancelled'),
-                supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'Processing'),
-                supabase
-                    .from('orders')
-                    .select('id, customer_name, total_amount, status, created_at')
-                    .order('created_at', { ascending: false })
-                    .limit(5)
-            ]);
-
-        const totalRevenue = revenue?.reduce((sum, o) => sum + o.total_amount, 0) || 0;
+                return { ...order, items: items || [] };
+            })
+        );
 
         res.status(200).json({
             status: 'success',
             data: {
-                stats: {
-                    totalProducts: products.count,
-                    totalOrders: orders.count,
-                    totalRevenue,
-                    pendingOrders: pending.count
-                },
-                recentOrders: recent
+                orders: ordersWithItems
             }
         });
     } catch (error) {
@@ -203,24 +160,199 @@ const getDashboardStats = async (req, res, next) => {
     }
 };
 
-// - getAllCustomers
-const getAllCustomers = async (req, res, next) => {
+const updateOrderStatus = async (req, res, next) => {
     try {
-        const { data: customers, error } = await supabase
-            .rpc('get_all_customers_with_orders'); // Use a Supabase function (SQL view or RPC) if needed
+        const { id } = req.params;
+        const { status } = req.body;
 
-        if (error) throw error;
+        // Update order status
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .update({ 
+                status, 
+                updated_at: new Date().toISOString() 
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (orderError || !order) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Order not found'
+            });
+        }
+
+        // Add tracking entry
+        let description = '';
+        switch (status) {
+            case 'Confirmed':
+                description = 'Your order has been confirmed and is being prepared';
+                break;
+            case 'Shipped':
+                description = 'Your order has been shipped and is on its way';
+                break;
+            case 'Delivered':
+                description = 'Your order has been delivered successfully';
+                break;
+            case 'Cancelled':
+                description = 'Your order has been cancelled';
+                break;
+            default:
+                description = `Order status updated to ${status}`;
+        }
+
+        const { error: trackingError } = await supabase
+            .from('order_tracking')
+            .insert([{
+                order_id: id,
+                status,
+                description
+            }]);
+
+        if (trackingError) {
+            console.error('Error adding tracking entry:', trackingError);
+        }
 
         res.status(200).json({
             status: 'success',
-            data: { customers }
+            message: 'Order status updated successfully',
+            data: {
+                order: order
+            }
         });
     } catch (error) {
         next(error);
     }
 };
 
- 
+// Dashboard Statistics
+const getDashboardStats = async (req, res, next) => {
+    try {
+        // Get total products with proper error handling
+        const { count: totalProducts, error: productsError } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_active', true);
+
+        if (productsError) {
+            console.error('Error fetching products count:', productsError);
+        }
+
+        // Get total orders
+        const { count: totalOrders, error: ordersError } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true });
+
+        if (ordersError) {
+            console.error('Error fetching orders count:', ordersError);
+        }
+
+        // Get total revenue (orders that are not cancelled)
+        const { data: revenueOrders, error: revenueError } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .neq('status', 'Cancelled');
+
+        if (revenueError) {
+            console.error('Error fetching revenue:', revenueError);
+        }
+
+        const totalRevenue = revenueOrders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+        // Get pending orders
+        const { count: pendingOrders, error: pendingError } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'Processing');
+
+        if (pendingError) {
+            console.error('Error fetching pending orders:', pendingError);
+        }
+
+        // Get recent orders
+        const { data: recentOrders, error: recentError } = await supabase
+            .from('orders')
+            .select('id, customer_name, total_amount, status, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        if (recentError) {
+            console.error('Error fetching recent orders:', recentError);
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                stats: {
+                    totalProducts: totalProducts || 0,
+                    totalOrders: totalOrders || 0,
+                    totalRevenue: totalRevenue,
+                    pendingOrders: pendingOrders || 0
+                },
+                recentOrders: recentOrders || []
+            }
+        });
+    } catch (error) {
+        console.error('Dashboard stats error:', error);
+        next(error);
+    }
+};
+
+// Customer Management
+const getAllCustomers = async (req, res, next) => {
+    try {
+        // Get all customers
+        const { data: customers, error: customersError } = await supabase
+            .from('users')
+            .select('id, name, email, phone, address, created_at')
+            .eq('role', 'customer')
+            .order('created_at', { ascending: false });
+
+        if (customersError) {
+            throw customersError;
+        }
+
+        // Get order statistics for each customer
+        const customersWithStats = await Promise.all(
+            (customers || []).map(async (customer) => {
+                const { data: orders, error: ordersError } = await supabase
+                    .from('orders')
+                    .select('total_amount, status')
+                    .eq('user_id', customer.id);
+
+                if (ordersError) {
+                    console.error('Error fetching customer orders:', ordersError);
+                    return {
+                        ...customer,
+                        total_orders: 0,
+                        total_spent: 0
+                    };
+                }
+
+                const totalOrders = orders?.length || 0;
+                const totalSpent = orders?.reduce((sum, order) => {
+                    return order.status !== 'Cancelled' ? sum + (order.total_amount || 0) : sum;
+                }, 0) || 0;
+
+                return {
+                    ...customer,
+                    total_orders: totalOrders,
+                    total_spent: totalSpent
+                };
+            })
+        );
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                customers: customersWithStats
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 module.exports = {
     createProduct,

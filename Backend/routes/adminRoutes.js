@@ -12,6 +12,7 @@ const {
     getDashboardStats,
     getAllCustomers
 } = require('../controllers/adminController');
+const { getAllProducts } = require('../controllers/productController');
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.use(requireRole(['admin']));
 router.get('/dashboard', getDashboardStats);
 
 // Product management
+router.get('/products', getAllProducts);
 router.post('/products', validateProduct, createProduct);
 router.put('/products/:id', validateProduct, updateProduct);
 router.delete('/products/:id', deleteProduct);
@@ -41,5 +43,6 @@ router.patch('/orders/:id/status', validateOrderStatus, updateOrderStatus);
 
 // Customer management
 router.get('/customers', getAllCustomers);
+
 
 module.exports = router;
