@@ -1386,49 +1386,58 @@ async function renderAdminDashboard() {
 
 async function renderAdminProducts() {
     try {
-        const res = await apiClient.get('/admin/products');
-        const products = res.data.products;
+        const response = await apiClient.get('/admin/products');
+        const products = response.data.products || [];
         const container = document.getElementById('adminProductsList');
-        container.innerHTML = '';
+        
+        if (!container) {
+            console.error("Admin products container not found!");
+            return;
+        }
 
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.classList.add('admin-product-card');
-            div.innerHTML = `
-                <img src="${product.image_url}" alt="${product.name}" />
+        container.innerHTML = products.map(product => `
+            <div class="admin-product-card">
+                <img src="${product.image_url}" alt="${product.name}" 
+                     onerror="this.src='https://via.placeholder.com/150'">
                 <h4>${product.name}</h4>
-                <p>KSh ${product.price}</p>
+                <p>${formatPrice(product.price)}</p>
                 <p>Stock: ${product.stock}</p>
-                <button onclick="editProduct('${product.id}')">Edit</button>
-                <button onclick="deleteProduct('${product.id}')">Delete</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Product Load Error:', err);
+                <div class="admin-product-actions">
+                    <button onclick="editProduct('${product.id}')">Edit</button>
+                    <button onclick="deleteProduct('${product.id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error("Failed to load admin products:", error);
+        showNotification("Error loading products", "error");
     }
 }
 
+
 async function renderAdminOrders() {
     try {
-        const res = await apiClient.get('/admin/orders');
-        const orders = res.data.orders;
+        const response = await apiClient.get('/admin/orders');
+        const orders = response.data.orders || [];
         const container = document.getElementById('adminOrdersList');
-        container.innerHTML = '';
-
-        orders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('order-card');
-            div.innerHTML = `
-                <strong>Order #${order.id}</strong> - ${order.status}<br>
-                <p>${order.customer_name} (${order.customer_email})</p>
-                <p>Total: KSh ${order.total_amount}</p>
-                <button onclick="showOrderDetails('${order.id}')">Details</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Orders Load Error:', err);
+        
+        container.innerHTML = orders.map(order => `
+            <div class="admin-order-card">
+                <div class="order-header">
+                    <span class="order-id">#${order.id}</span>
+                    <span class="order-date">${new Date(order.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="order-customer">${order.customer_name} (${order.customer_email})</div>
+                <div class="order-status status-${order.status.toLowerCase()}">
+                    ${order.status}
+                </div>
+                <div class="order-total">${formatPrice(order.total_amount)}</div>
+                <button onclick="showOrderDetails('${order.id}')">View Details</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error("Failed to load admin orders:", error);
+        showNotification("Error loading orders", "error");
     }
 }
 
@@ -1453,6 +1462,143 @@ async function renderAdminCustomers() {
         });
     } catch (err) {
         console.error('Customer Load Error:', err);
+    }
+}
+ 
+
+async function renderAdminTracking() {
+    try {
+        const response = await apiClient.get('/admin/orders');
+        const orders = response.data.orders || [];
+        const container = document.getElementById('trackingResult');
+        
+        if (!orders.length) {
+            container.innerHTML = '<div class="empty-state">No orders to track</div>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="tracking-controls">
+                <input type="text" placeholder="Search orders..." id="trackingSearch" 
+                       onkeyup="filterTrackingOrders()">
+                <select onchange="filterTrackingOrders()" id="trackingStatusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                </select>
+            </div>
+            <div class="tracking-list">
+                ${orders.map(order => `
+                    <div class="tracking-item" data-status="${order.status.toLowerCase()}">
+                        <div class="tracking-header">
+                            <span>Order #${order.id}</span>
+                            <span class="status-badge status-${order.status.toLowerCase()}">
+                                ${order.status}
+                            </span>
+                        </div>
+                        <div class="tracking-customer">
+                            ${order.customer_name} • ${order.customer_phone}
+                        </div>
+                        <div class="tracking-progress">
+                            ${renderTrackingProgress(order.status)}
+                        </div>
+                        <div class="tracking-actions">
+                            <button onclick="viewTrackingDetails('${order.id}')">
+                                View Details
+                            </button>
+                            <button onclick="updateOrderStatusPrompt('${order.id}')">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error("Tracking load error:", error);
+        showNotification("Failed to load tracking data", "error");
+    }
+}
+
+function renderTrackingProgress(status) {
+    const steps = [
+        { name: "Processing", active: true },
+        { name: "Shipped", active: ["Shipped", "Delivered"].includes(status) },
+        { name: "Delivered", active: status === "Delivered" }
+    ];
+
+    return `
+        <div class="progress-bar">
+            ${steps.map(step => `
+                <div class="progress-step ${step.active ? 'active' : ''}">
+                    <div class="step-marker"></div>
+                    <div class="step-label">${step.name}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function viewTrackingDetails(orderId) {
+    try {
+        const response = await apiClient.get(`/admin/tracking/${orderId}`);
+        const trackingData = response.data;
+        
+        const modalContent = `
+            <h3>Tracking Details for Order #${orderId}</h3>
+            <div class="tracking-timeline">
+                ${trackingData.history.map(event => `
+                    <div class="timeline-event">
+                        <div class="event-time">
+                            ${new Date(event.timestamp).toLocaleString()}
+                        </div>
+                        <div class="event-status">
+                            ${event.status}
+                        </div>
+                        <div class="event-notes">
+                            ${event.notes || "No additional notes"}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="hideOrderDetailsModal()" class="close-btn">
+                Close
+            </button>
+        `;
+        
+        document.getElementById('orderDetailsContent').innerHTML = modalContent;
+        document.getElementById('orderDetailsModal').classList.remove('hidden');
+    } catch (error) {
+        showNotification("Failed to load tracking details", "error");
+    }
+}
+
+function filterTrackingOrders() {
+    const searchTerm = document.getElementById('trackingSearch').value.toLowerCase();
+    const statusFilter = document.getElementById('trackingStatusFilter').value.toLowerCase();
+    
+    document.querySelectorAll('.tracking-item').forEach(item => {
+        const orderText = item.textContent.toLowerCase();
+        const orderStatus = item.getAttribute('data-status');
+        
+        const matchesSearch = orderText.includes(searchTerm);
+        const matchesStatus = !statusFilter || orderStatus === statusFilter;
+        
+        item.style.display = (matchesSearch && matchesStatus) ? 'block' : 'none';
+    });
+}
+
+async function updateOrderStatusPrompt(orderId) {
+    const newStatus = prompt("Enter new status (Processing/Shipped/Delivered/Cancelled):");
+    if (!newStatus) return;
+    
+    try {
+        await apiClient.patch(`/admin/orders/${orderId}/status`, { status: newStatus });
+        showNotification("Order status updated", "success");
+        renderAdminTracking(); // Refresh the view
+    } catch (error) {
+        showNotification("Failed to update status", "error");
     }
 }
 
