@@ -273,7 +273,7 @@ const apiServices = {
         async getAllProducts(filters = {}) {
             try {
                 const queryParams = new URLSearchParams();
-
+                
                 if (filters.category) queryParams.append('category', filters.category);
                 if (filters.search) queryParams.append('search', filters.search);
                 if (filters.page) queryParams.append('page', filters.page);
@@ -346,19 +346,19 @@ const apiServices = {
         // Local fallback methods
         getLocalProducts(filters = {}) {
             let filteredProducts = [...localProducts];
-
+            
             if (filters.category) {
                 filteredProducts = filteredProducts.filter(p => p.category === filters.category);
             }
-
+            
             if (filters.search) {
                 const searchTerm = filters.search.toLowerCase();
-                filteredProducts = filteredProducts.filter(p =>
-                    p.name.toLowerCase().includes(searchTerm) ||
+                filteredProducts = filteredProducts.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) || 
                     p.id.toLowerCase().includes(searchTerm)
                 );
             }
-
+            
             return {
                 products: filteredProducts,
                 pagination: {
@@ -463,7 +463,7 @@ const apiServices = {
         addToLocalCart(productId, quantity) {
             const product = localProducts.find(p => p.id === productId);
             if (!product) throw new Error('Product not found');
-
+            
             const existingItem = cart.find(item => item.id === productId);
             if (existingItem) {
                 existingItem.quantity += quantity;
@@ -477,7 +477,7 @@ const apiServices = {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const tax = subtotal * 0.16;
             const total = subtotal + tax;
-
+            
             return {
                 cartItems: cart.map(item => ({
                     id: item.id,
@@ -566,7 +566,7 @@ const apiServices = {
             const orderId = generateOrderId();
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const total = subtotal * 1.16;
-
+            
             const newOrder = {
                 id: orderId,
                 items: cart.map(item => ({
@@ -586,14 +586,14 @@ const apiServices = {
                 customer_phone: orderData.customer_phone,
                 created_at: new Date().toISOString()
             };
-
+            
             orders.push(newOrder);
             cart = []; // Clear cart
             return newOrder;
         },
 
         getLocalOrders() {
-            return orders.filter(order =>
+            return orders.filter(order => 
                 currentUser && (order.customer_email === currentUser.email)
             );
         }
@@ -620,7 +620,7 @@ const apiServices = {
         async checkPaymentStatus(checkoutRequestId) {
             try {
                 const endpoint = apiClient.replaceParams(
-                    API_CONFIG.ENDPOINTS.PAYMENTS.MPESA_STATUS,
+                    API_CONFIG.ENDPOINTS.PAYMENTS.MPESA_STATUS, 
                     { checkoutRequestId }
                 );
                 const response = await apiClient.get(endpoint);
@@ -637,19 +637,19 @@ const apiServices = {
         async pollPaymentStatus(checkoutRequestId, maxAttempts = 30, interval = 2000) {
             return new Promise((resolve, reject) => {
                 let attempts = 0;
-
+                
                 const poll = async () => {
                     try {
                         attempts++;
                         const result = await this.checkPaymentStatus(checkoutRequestId);
-
-                        if (result.localTransaction &&
-                            (result.localTransaction.status === 'success' ||
-                                result.localTransaction.status === 'failed')) {
+                        
+                        if (result.localTransaction && 
+                            (result.localTransaction.status === 'success' || 
+                             result.localTransaction.status === 'failed')) {
                             resolve(result);
                             return;
                         }
-
+                        
                         if (attempts < maxAttempts) {
                             setTimeout(poll, interval);
                         } else {
@@ -663,7 +663,7 @@ const apiServices = {
                         }
                     }
                 };
-
+                
                 poll();
             });
         }
@@ -733,11 +733,11 @@ const apiServices = {
         },
 
         getLocalDashboardStats() {
-            const totalRevenue = orders.reduce((sum, order) =>
+            const totalRevenue = orders.reduce((sum, order) => 
                 order.status !== 'Cancelled' ? sum + order.total_amount : sum, 0
             );
             const pendingOrdersCount = orders.filter(order => order.status === 'Processing').length;
-
+            
             return {
                 stats: {
                     totalProducts: localProducts.length,
@@ -750,6 +750,82 @@ const apiServices = {
         }
     }
 };
+
+// Local Products Data (fallback)
+const localProducts = [
+    { 
+        id: 'PRD001', 
+        name: 'Premium Wireless Headphones', 
+        price: 12500, 
+        image: 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Electronics', 
+        stock: 15,
+        description: 'High-quality wireless headphones with noise cancellation'
+    },
+    { 
+        id: 'PRD002', 
+        name: 'Smart Fitness Watch', 
+        price: 18750, 
+        image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Electronics', 
+        stock: 8,
+        description: 'Advanced fitness tracking with heart rate monitor'
+    },
+    { 
+        id: 'PRD003', 
+        name: 'Organic Coffee Beans', 
+        price: 1875, 
+        image: 'https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Food', 
+        stock: 25,
+        description: 'Premium organic coffee beans from Kenya'
+    },
+    { 
+        id: 'PRD004', 
+        name: 'Designer Backpack', 
+        price: 6250, 
+        image: 'https://images.pexels.com/photos/2905238/pexels-photo-2905238.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Fashion', 
+        stock: 12,
+        description: 'Stylish and durable backpack for everyday use'
+    },
+    { 
+        id: 'PRD005', 
+        name: 'Smartphone Case', 
+        price: 1250, 
+        image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Electronics', 
+        stock: 30,
+        description: 'Protective case for smartphones with shock absorption'
+    },
+    { 
+        id: 'PRD006', 
+        name: 'Yoga Mat', 
+        price: 3125, 
+        image: 'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Sports', 
+        stock: 18,
+        description: 'Non-slip yoga mat for comfortable workouts'
+    },
+    { 
+        id: 'PRD007', 
+        name: 'Bluetooth Speaker', 
+        price: 8750, 
+        image: 'https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Electronics', 
+        stock: 20,
+        description: 'Portable Bluetooth speaker with excellent sound quality'
+    },
+    { 
+        id: 'PRD008', 
+        name: 'Running Shoes', 
+        price: 15625, 
+        image: 'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=300', 
+        category: 'Sports', 
+        stock: 14,
+        description: 'Comfortable running shoes with advanced cushioning'
+    }
+];
 
 // Utility Functions
 function formatPrice(price) {
@@ -782,56 +858,33 @@ function showPage(pageName) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
-    if (pageName.startsWith('admin')) {
-        const adminPage = document.getElementById('adminPage');
-        if (adminPage) {
-            adminPage.classList.add('active');
-            currentPage = 'admin';
-        }
-
-        switch (pageName) {
-            case 'admin':
-                showAdminTab('overview'); // default tab
-                break;
-            case 'adminProducts':
-                showAdminTab('products');
-                break;
-            case 'adminOrders':
-                showAdminTab('orders');
-                break;
-            case 'adminCustomers':
-                showAdminTab('customers');
-                break;
-        }
-        return;
-    }
-    // Handle normal user pages
+    
+    // Show selected page
     const targetPage = document.getElementById(pageName + 'Page');
     if (targetPage) {
         targetPage.classList.add('active');
         currentPage = pageName;
     }
-
+    
     // Initialize page-specific content
-    switch (pageName) {
-        case 'home':
-            renderFeaturedProducts();
-            break;
-        case 'dashboard':
-            renderDashboard();
-            break;
+    if (pageName === 'home') {
+        renderFeaturedProducts();
+    } else if (pageName === 'dashboard') {
+        renderDashboard();
+    } else if (pageName === 'admin') {
+        renderAdminDashboard();
     }
 }
 
 function showLoginForm(type) {
     currentLoginType = type;
     showPage('login');
-
+    
     // Update login form based on type
     const subtitle = document.getElementById('loginSubtitle');
     const loginCard = document.querySelector('.login-card');
     const registerLink = document.getElementById('registerLink');
-
+    
     if (type === 'admin') {
         subtitle.textContent = 'Admin Access';
         loginCard.style.borderTop = '4px solid #7c3aed';
@@ -846,7 +899,7 @@ function showLoginForm(type) {
 function toggleRegister() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-
+    
     loginForm.classList.toggle('hidden');
     registerForm.classList.toggle('hidden');
 }
@@ -856,13 +909,13 @@ async function login(email, password) {
     try {
         const userData = await apiServices.auth.login(email, password);
         currentUser = userData.user;
-
+        
         if (currentUser.role === 'admin') {
             showPage('admin');
         } else {
             showPage('dashboard');
         }
-
+        
         showNotification('Login successful!');
         return true;
     } catch (error) {
@@ -899,7 +952,7 @@ async function renderFeaturedProducts() {
         const products = await apiServices.products.getFeaturedProducts();
         const container = document.getElementById('featuredProducts');
         if (!container) return;
-
+        
         container.innerHTML = products.map(product => `
             <div class="product-card fade-in">
                 <div class="product-id">${product.id}</div>
@@ -921,17 +974,17 @@ async function renderAllProducts() {
     try {
         const searchTerm = document.getElementById('productSearch')?.value || '';
         const category = document.getElementById('categoryFilter')?.value || '';
-
+        
         const data = await apiServices.products.getAllProducts({
             search: searchTerm,
             category: category,
             page: 1,
             limit: 12
         });
-
+        
         const container = document.getElementById('allProducts');
         if (!container) return;
-
+        
         container.innerHTML = data.products.map(product => `
             <div class="product-card fade-in">
                 <div class="product-id">${product.id}</div>
@@ -963,7 +1016,7 @@ async function addToCart(productId) {
             showNotification('Please login to add items to cart', 'error');
             return;
         }
-
+        
         await apiServices.cart.addToCart(productId, 1);
         await updateCartDisplay();
         showNotification('Product added to cart!');
@@ -982,15 +1035,15 @@ async function updateCartDisplay() {
             }
             return;
         }
-
+        
         const cartData = await apiServices.cart.getCart();
         const cartCount = document.getElementById('cartCount');
-
+        
         if (cartCount) {
             cartCount.textContent = cartData.summary.itemCount;
             cartCount.style.display = cartData.summary.itemCount > 0 ? 'flex' : 'none';
         }
-
+        
         // Update global cart variable for compatibility
         cart = cartData.cartItems.map(item => ({
             id: item.product_id,
@@ -1000,7 +1053,7 @@ async function updateCartDisplay() {
             quantity: item.quantity,
             cartItemId: item.id
         }));
-
+        
     } catch (error) {
         console.error('Failed to update cart display:', error);
     }
@@ -1025,21 +1078,21 @@ async function renderCartItems() {
             }
             return;
         }
-
+        
         const cartData = await apiServices.cart.getCart();
         const container = document.getElementById('cartItems');
         const footer = document.getElementById('cartFooter');
-
+        
         if (!container) return;
-
+        
         if (cartData.cartItems.length === 0) {
             container.innerHTML = '<div class="empty-state">Your cart is empty</div>';
             footer.style.display = 'none';
             return;
         }
-
+        
         footer.style.display = 'block';
-
+        
         container.innerHTML = cartData.cartItems.map(item => `
             <div class="cart-item">
                 <img src="${item.image_url}" alt="${item.name}" class="cart-item-image">
@@ -1055,13 +1108,13 @@ async function renderCartItems() {
                 <button onclick="removeFromCart('${item.id}')" class="remove-btn">✕</button>
             </div>
         `).join('');
-
+        
         // Update totals
         document.getElementById('subtotal').textContent = formatPrice(cartData.summary.subtotal);
         document.getElementById('tax').textContent = formatPrice(cartData.summary.tax);
         document.getElementById('total').textContent = formatPrice(cartData.summary.total);
         document.getElementById('paymentAmount').textContent = formatPrice(cartData.summary.total);
-
+        
     } catch (error) {
         showNotification('Failed to load cart items', 'error');
     }
@@ -1073,7 +1126,7 @@ async function updateCartQuantity(cartItemId, quantity) {
             await removeFromCart(cartItemId);
             return;
         }
-
+        
         await apiServices.cart.updateCartItem(cartItemId, quantity);
         await updateCartDisplay();
         await renderCartItems();
@@ -1099,10 +1152,10 @@ function showPaymentModal() {
         showNotification('Your cart is empty!', 'error');
         return;
     }
-
+    
     currentOrderId = generateOrderId();
     document.getElementById('paymentModal').classList.remove('hidden');
-
+    
     // Pre-fill customer phone if available
     if (currentUser && currentUser.phone) {
         document.getElementById('customerPhone').value = currentUser.phone;
@@ -1115,7 +1168,7 @@ function hidePaymentModal() {
 
 function selectPaymentMethod(method) {
     selectedPaymentMethod = method;
-
+    
     // Update UI
     document.querySelectorAll('.payment-method').forEach(el => {
         el.classList.remove('selected');
@@ -1130,14 +1183,14 @@ async function confirmPayment() {
             showNotification('Please enter your phone number!', 'error');
             return;
         }
-
+        
         // Get current cart
         const cartData = await apiServices.cart.getCart();
         if (cartData.cartItems.length === 0) {
             showNotification('Your cart is empty!', 'error');
             return;
         }
-
+        
         const orderData = {
             items: cartData.cartItems.map(item => ({
                 product_id: item.product_id,
@@ -1150,9 +1203,9 @@ async function confirmPayment() {
             shipping_address: currentUser?.address || '',
             notes: ''
         };
-
+        
         const order = await apiServices.orders.createOrder(orderData);
-
+        
         // If M-Pesa payment, initiate STK push
         if (selectedPaymentMethod === 'mpesa') {
             try {
@@ -1161,9 +1214,9 @@ async function confirmPayment() {
                     customerPhone,
                     cartData.summary.total
                 );
-
+                
                 showNotification('M-Pesa payment request sent to your phone. Please enter your PIN to complete payment.');
-
+                
                 // Poll for payment status
                 apiServices.payments.pollPaymentStatus(paymentResult.checkoutRequestId)
                     .then(result => {
@@ -1176,19 +1229,19 @@ async function confirmPayment() {
                     .catch(error => {
                         showNotification('Payment status check failed. Please contact support.', 'error');
                     });
-
+                    
             } catch (paymentError) {
                 showNotification('Failed to initiate M-Pesa payment: ' + paymentError.message, 'error');
             }
         }
-
+        
         await updateCartDisplay();
         hidePaymentModal();
         toggleCart();
-
+        
         showNotification(`Order placed successfully! Order ID: ${order.id}`);
         await renderOrders();
-
+        
     } catch (error) {
         showNotification(error.message, 'error');
     }
@@ -1198,16 +1251,16 @@ async function confirmPayment() {
 async function renderOrders() {
     try {
         if (!apiServices.auth.isAuthenticated()) return;
-
+        
         const orders = await apiServices.orders.getUserOrders();
         const container = document.getElementById('ordersList');
         if (!container) return;
-
+        
         if (orders.length === 0) {
             container.innerHTML = '<div class="empty-state">No orders yet.</div>';
             return;
         }
-
+        
         container.innerHTML = orders.map(order => `
             <div class="order-card">
                 <div class="order-header">
@@ -1233,7 +1286,7 @@ async function renderOrders() {
                 </div>
             </div>
         `).join('');
-
+        
     } catch (error) {
         showNotification('Failed to load orders', 'error');
     }
@@ -1260,10 +1313,10 @@ async function trackOrderById() {
             showNotification('Please enter an order ID!', 'error');
             return;
         }
-
+        
         const trackingData = await apiServices.tracking.getOrderTracking(orderId);
         displayOrderTracking(trackingData);
-
+        
     } catch (error) {
         document.getElementById('trackingResult').innerHTML = `
             <div class="empty-state">Order not found. Please check the order ID and try again.</div>
@@ -1283,10 +1336,10 @@ async function trackOrderDetails(orderId) {
 function displayOrderTracking(trackingData) {
     const container = document.getElementById('trackingResult');
     if (!container) return;
-
+    
     const order = trackingData.order;
     const trackingHistory = trackingData.trackingHistory;
-
+    
     container.innerHTML = `
         <div class="tracking-info">
             <h4>Order #${order.id}</h4>
@@ -1316,12 +1369,12 @@ function displayOrderTracking(trackingData) {
 // Dashboard Functions
 function renderDashboard() {
     if (!currentUser || currentUser.role !== 'customer') return;
-
+    
     document.getElementById('welcomeUser').textContent = `Welcome, ${currentUser.name}`;
     renderAllProducts();
     renderOrders();
     updateCartDisplay();
-
+    
     // Pre-fill profile form
     if (currentUser) {
         document.getElementById('profileName').value = currentUser.name || '';
@@ -1337,13 +1390,13 @@ function showDashboardTab(tabName) {
         btn.classList.remove('active');
     });
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
+    
     // Update tab content
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     document.getElementById(tabName + 'Tab').classList.add('active');
-
+    
     // Load tab-specific content
     if (tabName === 'products') {
         renderAllProducts();
@@ -1356,157 +1409,43 @@ function showDashboardTab(tabName) {
 }
 
 // Admin Functions
-// async function renderAdminDashboard() {
-//     if (!currentUser || currentUser.role !== 'admin') return;
-
-//     await updateAdminStats();
-//     await renderFeaturedProducts();
-//     await renderOrders();
-//     await renderAdminCustomers();
-//     renderAllProducts(); // Use same products for admin
-// }
 async function renderAdminDashboard() {
-    try {
-        const res = await apiClient.get('/admin/dashboard');
-        const { stats, recentOrders } = res.data;
-
-        document.getElementById('totalProducts').textContent = stats.totalProducts;
-        document.getElementById('totalOrders').textContent = stats.totalOrders;
-        document.getElementById('totalRevenue').textContent = `KSh ${stats.totalRevenue}`;
-        document.getElementById('pendingOrders').textContent = stats.pendingOrders;
-
-        const list = document.getElementById('recentOrdersList');
-        list.innerHTML = '';
-        recentOrders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('recent-order-item');
-            div.innerHTML = `
-                <strong>${order.customer_name}</strong><br>
-                Order #${order.id} - KSh ${order.total_amount}<br>
-                <small>${new Date(order.created_at).toLocaleString()}</small>
-            `;
-            list.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Dashboard Load Error:', err);
-    }
+    if (!currentUser || currentUser.role !== 'admin') return;
+    
+    await updateAdminStats();
+    renderAllProducts(); // Use same products for admin
 }
-async function renderAdminProducts() {
-    try {
-        const res = await apiClient.get('/admin/products');
-        const products = res.data.products;
-        const container = document.getElementById('adminProductsList');
-        container.innerHTML = '';
-
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.classList.add('admin-product-card');
-            div.innerHTML = `
-                <img src="${product.image_url}" alt="${product.name}" />
-                <h4>${product.name}</h4>
-                <p>KSh ${product.price}</p>
-                <p>Stock: ${product.stock}</p>
-                <button onclick="editProduct('${product.id}')">Edit</button>
-                <button onclick="deleteProduct('${product.id}')">Delete</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Product Load Error:', err);
-    }
-}
-async function renderAdminOrders() {
-    try {
-        const res = await apiClient.get('/admin/orders');
-        const orders = res.data.orders;
-        const container = document.getElementById('adminOrdersList');
-        container.innerHTML = '';
-
-        orders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('order-card');
-            div.innerHTML = `
-                <strong>Order #${order.id}</strong> - ${order.status}<br>
-                <p>${order.customer_name} (${order.customer_email})</p>
-                <p>Total: KSh ${order.total_amount}</p>
-                <button onclick="showOrderDetails('${order.id}')">Details</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Orders Load Error:', err);
-    }
-}
-async function renderAdminCustomers() {
-    try {
-        const res = await apiClient.get('/admin/customers');
-        const customers = res.data.customers;
-        const list = document.getElementById('customersList');
-        list.innerHTML = '';
-
-        customers.forEach(customer => {
-            const div = document.createElement('div');
-            div.classList.add('customer-card');
-            div.innerHTML = `
-                <h4>${customer.name}</h4>
-                <p>Email: ${customer.email}</p>
-                <p>Phone: ${customer.phone}</p>
-                <p>Total Orders: ${customer.total_orders}</p>
-                <p>Total Spent: KSh ${customer.total_spent}</p>
-            `;
-            list.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Customer Load Error:', err);
-    }
-}
-
 
 function showAdminTab(tabName) {
     // Update sidebar buttons
     document.querySelectorAll('.sidebar-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
-
-    // Update tab content visibility
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Update tab content
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    const activeTab = document.getElementById(tabName + 'Tab');
-    if (activeTab) activeTab.classList.add('active');
-
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
     // Load tab-specific content
-    switch (tabName) {
-        case 'overview':
-            updateAdminStats();          
-            break;
-        case 'products':
-            renderAdminProducts();         
-            break;
-        case 'orders':
-            renderAdminOrders();            
-            break;
-        case 'tracking':
-            renderAdminTracking();         
-            break;
-        case 'customers':
-            renderAdminCustomers();         
-            break;
+    if (tabName === 'overview') {
+        updateAdminStats();
+    } else if (tabName === 'products') {
+        renderAllProducts();
     }
 }
-
 
 async function updateAdminStats() {
     try {
         const stats = await apiServices.admin.getDashboardStats();
-
+        
         document.getElementById('totalProducts').textContent = stats.stats.totalProducts;
         document.getElementById('totalOrders').textContent = stats.stats.totalOrders;
         document.getElementById('totalRevenue').textContent = formatPrice(stats.stats.totalRevenue);
         document.getElementById('pendingOrders').textContent = stats.stats.pendingOrders;
-
+        
         // Render recent orders
         const container = document.getElementById('recentOrdersList');
         if (container && stats.recentOrders) {
@@ -1533,10 +1472,10 @@ async function submitInquiry(inquiryData) {
     try {
         await apiServices.inquiries.submitInquiry(inquiryData);
         showNotification('Inquiry submitted successfully! We will get back to you soon.');
-
+        
         // Clear form
         document.getElementById('inquiryForm').reset();
-
+        
     } catch (error) {
         showNotification(error.message, 'error');
     }
@@ -1546,10 +1485,10 @@ async function submitInquiry(inquiryData) {
 function showOrderDetails(orderId) {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
-
+    
     const modal = document.getElementById('orderDetailsModal');
     const content = document.getElementById('orderDetailsContent');
-
+    
     content.innerHTML = `
         <div class="order-details">
             <h4>Order #${order.id}</h4>
@@ -1580,7 +1519,7 @@ function showOrderDetails(orderId) {
             </div>
         </div>
     `;
-
+    
     modal.classList.remove('hidden');
 }
 
@@ -1609,7 +1548,7 @@ function showNotification(message, type = 'success') {
         border: 1px solid ${type === 'error' ? '#dc2626' : '#059669'};
     `;
     notification.textContent = message;
-
+    
     // Add animation styles
     const style = document.createElement('style');
     style.textContent = `
@@ -1623,9 +1562,9 @@ function showNotification(message, type = 'success') {
         }
     `;
     document.head.appendChild(style);
-
+    
     document.body.appendChild(notification);
-
+    
     // Remove notification after 4 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-out';
@@ -1638,36 +1577,31 @@ function showNotification(message, type = 'success') {
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     // Check if user is already logged in
     if (apiServices.auth.isAuthenticated()) {
         currentUser = apiServices.auth.getCurrentUser();
-        console.log('Logged-in user:', currentUser);
-
-        if (currentUser.role === 'admin') {
-            renderAdminDashboard();
-        }
         updateCartDisplay();
     }
-
+    
     // Initialize the application
     showPage('home');
-
+    
     // Login form handler
-    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-
+        
         await login(email, password);
-
+        
         // Clear form
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
     });
-
+    
     // Register form handler
-    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const userData = {
             name: document.getElementById('registerName').value,
@@ -1675,22 +1609,22 @@ document.addEventListener('DOMContentLoaded', function () {
             phone: document.getElementById('registerPhone').value,
             password: document.getElementById('registerPassword').value
         };
-
+        
         const confirmPassword = document.getElementById('confirmPassword').value;
-
+        
         if (userData.password !== confirmPassword) {
             showNotification('Passwords do not match', 'error');
             return;
         }
-
+        
         if (await register(userData)) {
             toggleRegister();
             document.getElementById('registerForm').reset();
         }
     });
-
+    
     // Inquiry form handler
-    document.getElementById('inquiryForm').addEventListener('submit', async function (e) {
+    document.getElementById('inquiryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const inquiryData = {
             name: document.getElementById('inquiryName').value,
@@ -1700,21 +1634,21 @@ document.addEventListener('DOMContentLoaded', function () {
             order_id: document.getElementById('inquiryOrderId').value || null,
             message: document.getElementById('inquiryMessage').value
         };
-
+        
         await submitInquiry(inquiryData);
     });
-
+    
     // Profile form handler
-    document.getElementById('profileForm').addEventListener('submit', async function (e) {
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-
+        
         try {
             const profileData = {
                 name: document.getElementById('profileName').value,
                 phone: document.getElementById('profilePhone').value,
                 address: document.getElementById('profileAddress').value
             };
-
+            
             const updatedUser = await apiServices.auth.updateProfile(profileData);
             currentUser = updatedUser;
             showNotification('Profile updated successfully!');
@@ -1722,35 +1656,35 @@ document.addEventListener('DOMContentLoaded', function () {
             showNotification(error.message, 'error');
         }
     });
-
+    
     // Close cart when clicking outside
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const cartSidebar = document.getElementById('cartSidebar');
         const cartBtn = document.querySelector('.cart-btn');
-
-        if (cartSidebar && cartSidebar.classList.contains('open') &&
+        
+        if (cartSidebar && cartSidebar.classList.contains('open') && 
             !cartSidebar.contains(e.target) && !cartBtn.contains(e.target)) {
             toggleCart();
         }
     });
 
     // Close payment modal when clicking outside
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const paymentModal = document.getElementById('paymentModal');
         const paymentContent = document.querySelector('.payment-content');
-
-        if (paymentModal && !paymentModal.classList.contains('hidden') &&
+        
+        if (paymentModal && !paymentModal.classList.contains('hidden') && 
             !paymentContent.contains(e.target) && e.target === paymentModal) {
             hidePaymentModal();
         }
     });
-
+    
     // Close order details modal when clicking outside
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const orderModal = document.getElementById('orderDetailsModal');
         const orderContent = orderModal?.querySelector('.payment-content');
-
-        if (orderModal && !orderModal.classList.contains('hidden') &&
+        
+        if (orderModal && !orderModal.classList.contains('hidden') && 
             !orderContent?.contains(e.target) && e.target === orderModal) {
             hideOrderDetailsModal();
         }
