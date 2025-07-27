@@ -112,22 +112,23 @@ const getAllOrders = async (req, res, next) => {
         const { status, search, page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
-        let ordersQuery = supabase
+        let query = supabase
             .from('orders')
             .select('*')
-            .order('created_at', { ascending: false })
-            .range(offset, offset + parseInt(limit) - 1);
+            .order('created_at', { ascending: false });
 
         if (status) {
-            ordersQuery = ordersQuery.eq('status', status);
+            query = query.eq('status', status);
         }
 
         if (search) {
-            ordersQuery = ordersQuery.or(`id.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`);
+            query = query.or(`id.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`);
         }
 
-        const { data: orders, error: ordersError } = await ordersQuery;
+        // Apply pagination
+        query = query.range(offset, offset + parseInt(limit) - 1);
 
+        const { data: orders, error: ordersError } = await query;
         if (ordersError) {
             throw ordersError;
         }
@@ -245,6 +246,7 @@ const getDashboardStats = async (req, res, next) => {
             .select('*', { count: 'exact', head: true });
 
         if (ordersError) {
+            console.error('Error fetching orders:', ordersError);
             console.error('Error fetching orders count:', ordersError);
         }
 
@@ -318,8 +320,11 @@ const getAllCustomers = async (req, res, next) => {
             (customers || []).map(async (customer) => {
                 const { data: orders, error: ordersError } = await supabase
                     .from('orders')
-                    .select('total_amount, status')
-                    .eq('user_id', customer.id);
+            }
+            )
+        )
+        const ordersWithItems = await Promise.all(
+            (orders || []).map(async (order) => {
 
                 if (ordersError) {
                     console.error('Error fetching customer orders:', ordersError);
@@ -350,6 +355,7 @@ const getAllCustomers = async (req, res, next) => {
             }
         });
     } catch (error) {
+        console.error('Get all orders error:', error);
         next(error);
     }
 };

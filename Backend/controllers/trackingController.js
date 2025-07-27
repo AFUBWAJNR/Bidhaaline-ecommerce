@@ -1,10 +1,11 @@
 const { supabase } = require('../config/supabase');
 
+
 const getOrderTracking = async (req, res, next) => {
     try {
         const { orderId } = req.params;
 
-        // Fetch order details
+        // Get order details from Supabase
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .select('*')
@@ -18,14 +19,16 @@ const getOrderTracking = async (req, res, next) => {
             });
         }
 
-        // Fetch tracking history
+        // Get tracking history from Supabase
         const { data: trackingHistory, error: trackingError } = await supabase
             .from('order_tracking')
             .select('*')
             .eq('order_id', orderId)
             .order('created_at', { ascending: true });
 
-        if (trackingError) throw trackingError;
+        if (trackingError) {
+            console.error('Error fetching tracking history:', trackingError);
+        }
 
         res.status(200).json({
             status: 'success',
@@ -38,10 +41,11 @@ const getOrderTracking = async (req, res, next) => {
                     customer_name: order.customer_name,
                     customer_phone: order.customer_phone
                 },
-                trackingHistory
+                trackingHistory: trackingHistory || []
             }
         });
     } catch (error) {
+        console.error('Get order tracking error:', error);
         next(error);
     }
 };
@@ -50,7 +54,7 @@ const getUserOrderTracking = async (req, res, next) => {
     try {
         const { orderId } = req.params;
 
-        // Order check for authenticated user
+        // Get order details (only for the authenticated user) from Supabase
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .select('*')
@@ -65,14 +69,16 @@ const getUserOrderTracking = async (req, res, next) => {
             });
         }
 
-        // Fetch tracking history
+        // Get tracking history from Supabase
         const { data: trackingHistory, error: trackingError } = await supabase
             .from('order_tracking')
             .select('*')
             .eq('order_id', orderId)
             .order('created_at', { ascending: true });
 
-        if (trackingError) throw trackingError;
+        if (trackingError) {
+            console.error('Error fetching tracking history:', trackingError);
+        }
 
         res.status(200).json({
             status: 'success',
@@ -85,10 +91,11 @@ const getUserOrderTracking = async (req, res, next) => {
                     customer_name: order.customer_name,
                     customer_phone: order.customer_phone
                 },
-                trackingHistory
+                trackingHistory: trackingHistory || []
             }
         });
     } catch (error) {
+        console.error('Get user order tracking error:', error);
         next(error);
     }
 };
@@ -98,7 +105,7 @@ const addTrackingUpdate = async (req, res, next) => {
         const { orderId } = req.params;
         const { status, description } = req.body;
 
-        // Check if order exists
+        // Verify order exists in Supabase
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .select('id')
@@ -112,14 +119,20 @@ const addTrackingUpdate = async (req, res, next) => {
             });
         }
 
-        // Add new tracking entry
-        const { data: tracking, error: insertError } = await supabase
+        // Add tracking update to Supabase
+        const { data: tracking, error: trackingError } = await supabase
             .from('order_tracking')
-            .insert([{ order_id: orderId, status, description }])
-            .select('*')
+            .insert([{
+                order_id: orderId,
+                status,
+                description
+            }])
+            .select()
             .single();
 
-        if (insertError) throw insertError;
+        if (trackingError) {
+            throw trackingError;
+        }
 
         res.status(201).json({
             status: 'success',
@@ -129,6 +142,7 @@ const addTrackingUpdate = async (req, res, next) => {
             }
         });
     } catch (error) {
+        console.error('Add tracking update error:', error);
         next(error);
     }
 };

@@ -3,19 +3,18 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
-
-const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const cartRoutes = require('./routes/cartRoutes');
-const inquiryRoutes = require('./routes/inquiryRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const trackingRoutes = require('./routes/trackingRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-
-const errorHandler = require('./middleware/errorHandler');
 const { testConnection } = require('./config/supabase');
+const errorHandler = require('./middleware/errorHandler');
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
+const inquiryRoutes = require('./routes/inquiryRoutes'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +23,9 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(cors({
     origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
@@ -47,12 +48,12 @@ testConnection();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/inquiries', inquiryRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/tracking', trackingRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/tracking', trackingRoutes);
+app.use('/api/inquiries', inquiryRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
