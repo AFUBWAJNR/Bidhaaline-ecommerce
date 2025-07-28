@@ -20,6 +20,7 @@ window.apiServices = {
     admin: adminService
 };
 let currentUser = null;
+let cart = [];
  
 
 
