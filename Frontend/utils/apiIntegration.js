@@ -8,6 +8,36 @@ import trackingService from '../api/trackingService.js';
 import inquiryService from '../api/inquiryService.js';
 import adminService from '../api/adminService.js';
 
+
+const appPages = ['home', 'dashboard', 'admin', 'products', 'cart', 'orders']; 
+
+function showPage(pageName) {
+    // Hide all pages first
+    appPages.forEach(page => {
+        const el = document.getElementById(`${page}Page`);
+        if (el) el.style.display = 'none';
+    });
+    
+    // Show requested page
+    const targetPage = document.getElementById(`${pageName}Page`);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+        
+        // Load page-specific content
+        if (pageName === 'home') renderFeaturedProducts();
+        if (pageName === 'products') renderAllProducts();
+        if (pageName === 'cart') renderCartItems();
+        if (pageName === 'orders') renderOrders();
+    } else {
+        console.error(`Page container #${pageName}Page not found`);
+    }
+}
+
+ 
+document.addEventListener('DOMContentLoaded', () => {
+    showPage('home'); 
+});
+
 // Updated global functions to use API services
 window.apiServices = {
     auth: authService,
