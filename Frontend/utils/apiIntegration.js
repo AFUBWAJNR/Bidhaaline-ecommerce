@@ -1,3 +1,12 @@
+let currentUser = null;
+let currentPage = 'home';
+let currentLoginType = null;
+let cart = [];
+let orders = [];
+let customers = [];
+let selectedPaymentMethod = 'mpesa';
+let currentOrderId = null;
+
 // Import all services
 import authService from '../api/authService.js';
 import productService from '../api/productService.js';
@@ -9,34 +18,52 @@ import inquiryService from '../api/inquiryService.js';
 import adminService from '../api/adminService.js';
 
 
-const appPages = ['home', 'dashboard', 'admin', 'products', 'cart', 'orders']; 
-
 function showPage(pageName) {
-    // Hide all pages first
-    appPages.forEach(page => {
-        const el = document.getElementById(`${page}Page`);
-        if (el) el.style.display = 'none';
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
     });
-    
-    // Show requested page
-    const targetPage = document.getElementById(`${pageName}Page`);
+    if (pageName.startsWith('admin')) {
+        const adminPage = document.getElementById('adminPage');
+        if (adminPage) {
+            adminPage.classList.add('active');
+            currentPage = 'admin';
+        }
+
+        switch (pageName) {
+            case 'admin':
+                showAdminTab('overview'); // default tab
+                break;
+            case 'adminProducts':
+                showAdminTab('products');
+                break;
+            case 'adminOrders':
+                showAdminTab('orders');
+                break;
+            case 'adminCustomers':
+                showAdminTab('customers');
+                break;
+        }
+        return;
+    }
+    // Handle normal user pages
+    const targetPage = document.getElementById(pageName + 'Page');
     if (targetPage) {
-        targetPage.style.display = 'block';
-        
-        // Load page-specific content
-        if (pageName === 'home') renderFeaturedProducts();
-        if (pageName === 'products') renderAllProducts();
-        if (pageName === 'cart') renderCartItems();
-        if (pageName === 'orders') renderOrders();
-    } else {
-        console.error(`Page container #${pageName}Page not found`);
+        targetPage.classList.add('active');
+        currentPage = pageName;
+    }
+
+    // Initialize page-specific content
+    switch (pageName) {
+        case 'home':
+            renderFeaturedProducts();
+            break;
+        case 'dashboard':
+            renderDashboard();
+            break;
     }
 }
 
- 
-document.addEventListener('DOMContentLoaded', () => {
-    showPage('home'); 
-});
 
 // Updated global functions to use API services
 window.apiServices = {
@@ -49,9 +76,6 @@ window.apiServices = {
     inquiries: inquiryService,
     admin: adminService
 };
-let currentUser = null;
-let cart = [];
- 
 
 
 // Updated authentication functions
@@ -561,6 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification(error.message, 'error');
         }
     });
+    showPage('home');
 });
 
 // Export functions for global use
