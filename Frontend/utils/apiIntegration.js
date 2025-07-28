@@ -19,6 +19,9 @@ window.apiServices = {
     inquiries: inquiryService,
     admin: adminService
 };
+let currentUser = null;
+ 
+
 
 // Updated authentication functions
 async function login(email, password) {
@@ -147,17 +150,17 @@ async function updateCartDisplay() {
             }
             return;
         }
-        
+
         const cartData = await cartService.getCart();
         const cartCount = document.getElementById('cartCount');
-        
+
         if (cartCount) {
             cartCount.textContent = cartData.summary.itemCount;
             cartCount.style.display = cartData.summary.itemCount > 0 ? 'flex' : 'none';
         }
+
         
-        // Update global cart variable for compatibility
-        cart = cartData.cartItems.map(item => ({
+        window.cart = cartData.cartItems.map(item => ({
             id: item.product_id,
             name: item.name,
             price: item.price,
@@ -165,12 +168,13 @@ async function updateCartDisplay() {
             quantity: item.quantity,
             cartItemId: item.id
         }));
-        
+
     } catch (error) {
         console.error('Failed to update cart display:', error);
     }
 }
 
+ 
 async function renderCartItems() {
     try {
         if (!authService.isAuthenticated()) {
