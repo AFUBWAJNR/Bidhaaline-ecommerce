@@ -1387,33 +1387,40 @@ async function renderAdminDashboard() {
 async function renderAdminProducts() {
     try {
         const response = await apiClient.get('/admin/products');
-        const products = response.data.products || [];
-        const container = document.getElementById('adminProductsList');
+        console.log("Products API Response:", response); // Debug line
         
-        if (!container) {
-            console.error("Admin products container not found!");
+        // Handle empty or missing data
+        if (!response.data?.products?.length) {
+            document.getElementById('adminProductsList').innerHTML = `
+                <div class="empty-state">
+                    <p>No products found in database</p>
+                    <button onclick="location.reload()">Refresh</button>
+                </div>
+            `;
             return;
         }
 
-        container.innerHTML = products.map(product => `
-            <div class="admin-product-card">
-                <img src="${product.image_url}" alt="${product.name}" 
-                     onerror="this.src='https://via.placeholder.com/150'">
+        const container = document.getElementById('adminProductsList');
+        container.innerHTML = response.data.products.map(product => `
+            <div class="product-card">
+                <img src="${product.image_url || 'default-product.jpg'}" 
+                     alt="${product.name}" 
+                     onerror="this.src='default-product.jpg'">
                 <h4>${product.name}</h4>
-                <p>${formatPrice(product.price)}</p>
+                <p>Price: ${formatPrice(product.price)}</p>
                 <p>Stock: ${product.stock}</p>
-                <div class="admin-product-actions">
+                <div class="product-actions">
                     <button onclick="editProduct('${product.id}')">Edit</button>
                     <button onclick="deleteProduct('${product.id}')">Delete</button>
                 </div>
             </div>
         `).join('');
+        
     } catch (error) {
-        console.error("Failed to load admin products:", error);
-        showNotification("Error loading products", "error");
+        console.error("Product load error:", error);
+        showNotification("Failed to load products", "error");
     }
 }
-
 
 async function renderAdminOrders() {
     try {
