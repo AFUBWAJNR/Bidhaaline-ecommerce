@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bidhaaline E-commerce System</title>
     <link rel="stylesheet" href="Bidhaaline.css">
 </head>
+
 <body>
     <div id="app">
         <!-- Home Page -->
@@ -55,21 +57,21 @@
                 <div class="login-type-card">
                     <h2 class="login-type-title">Choose Login Type</h2>
                     <p class="login-type-subtitle">Select how you want to access Bidhaaline</p>
-                    
+
                     <div class="login-options">
                         <div class="login-option customer" onclick="showLoginForm('customer')">
                             <div class="option-icon">👥</div>
                             <h3>Customer Login</h3>
                             <p>Shop and manage your orders</p>
                         </div>
-                        
+
                         <div class="login-option admin" onclick="showLoginForm('admin')">
                             <div class="option-icon">🛡️</div>
                             <h3>Admin Login</h3>
                             <p>Manage products and orders</p>
                         </div>
                     </div>
-                    
+
                     <button onclick="showPage('home')" class="back-btn">← Back to Home</button>
                 </div>
             </div>
@@ -96,7 +98,7 @@
                         </div>
                         <button type="submit" id="loginSubmitBtn" class="submit-btn">Login</button>
                         <p id="registerLink" class="register-link">
-                            Don't have an account? 
+                            Don't have an account?
                             <button type="button" onclick="toggleRegister()" class="link-btn">Register</button>
                         </p>
                         <div id="demoCredentials" class="demo-info">
@@ -129,7 +131,7 @@
                         </div>
                         <button type="submit" class="submit-btn">Register</button>
                         <p class="register-link">
-                            Already have an account? 
+                            Already have an account?
                             <button type="button" onclick="toggleRegister()" class="link-btn">Login</button>
                         </p>
                     </form>
@@ -156,12 +158,12 @@
 
             <div class="container inquiry-container">
                 <h2 class="page-title">Contact & Inquiry</h2>
-                
+
                 <div class="inquiry-grid">
                     <!-- Contact Information -->
                     <div class="contact-info">
                         <h3 class="contact-title">Get in Touch</h3>
-                        
+
                         <!-- Phone Numbers -->
                         <div class="contact-section">
                             <div class="contact-header">
@@ -235,7 +237,7 @@
                     <!-- Inquiry Form -->
                     <div class="inquiry-form-container">
                         <h3 class="form-title">Send us a Message</h3>
-                        
+
                         <form id="inquiryForm" class="inquiry-form">
                             <div class="form-group">
                                 <label>Full Name *</label>
@@ -266,12 +268,14 @@
 
                             <div class="form-group">
                                 <label>Order ID (Optional)</label>
-                                <input type="text" id="inquiryOrderId" placeholder="Enter order ID if inquiry is about an order">
+                                <input type="text" id="inquiryOrderId"
+                                    placeholder="Enter order ID if inquiry is about an order">
                             </div>
 
                             <div class="form-group">
                                 <label>Message *</label>
-                                <textarea id="inquiryMessage" rows="5" required placeholder="Enter your message or inquiry details"></textarea>
+                                <textarea id="inquiryMessage" rows="5" required
+                                    placeholder="Enter your message or inquiry details"></textarea>
                             </div>
 
                             <button type="submit" class="submit-btn">
@@ -302,10 +306,14 @@
                 <div class="dashboard-layout">
                     <div class="sidebar">
                         <nav class="sidebar-nav">
-                            <button onclick="showDashboardTab('products')" class="sidebar-btn active" data-tab="products">Products</button>
-                            <button onclick="showDashboardTab('orders')" class="sidebar-btn" data-tab="orders">My Orders</button>
-                            <button onclick="showDashboardTab('tracking')" class="sidebar-btn" data-tab="tracking">Track Order</button>
-                            <button onclick="showDashboardTab('profile')" class="sidebar-btn" data-tab="profile">Profile</button>
+                            <button onclick="showDashboardTab('products')" class="sidebar-btn active"
+                                data-tab="products">Products</button>
+                            <button onclick="showDashboardTab('orders')" class="sidebar-btn" data-tab="orders">My
+                                Orders</button>
+                            <button onclick="showDashboardTab('tracking')" class="sidebar-btn" data-tab="tracking">Track
+                                Order</button>
+                            <button onclick="showDashboardTab('profile')" class="sidebar-btn"
+                                data-tab="profile">Profile</button>
                         </nav>
                     </div>
 
@@ -315,7 +323,8 @@
                             <h3 class="tab-title">Products</h3>
                             <div class="search-filter-section">
                                 <div class="search-bar">
-                                    <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()">
+                                    <input type="text" id="productSearch" placeholder="Search products..."
+                                        onkeyup="filterProducts()">
                                 </div>
                                 <div class="filter-section">
                                     <select id="categoryFilter" onchange="filterProducts()">
@@ -344,7 +353,8 @@
                                 <div class="tracking-form">
                                     <div class="form-group">
                                         <label>Enter Order ID</label>
-                                        <input type="text" id="trackingOrderId" placeholder="Enter your order ID (e.g., ORD123456)">
+                                        <input type="text" id="trackingOrderId"
+                                            placeholder="Enter your order ID (e.g., ORD123456)">
                                     </div>
                                     <button onclick="trackOrderById()" class="submit-btn">Track Order</button>
                                 </div>
@@ -370,7 +380,8 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Address</label>
-                                    <textarea id="profileAddress" rows="3" placeholder="Enter your delivery address"></textarea>
+                                    <textarea id="profileAddress" rows="3"
+                                        placeholder="Enter your delivery address"></textarea>
                                 </div>
                                 <button type="submit" class="submit-btn">Update Profile</button>
                             </form>
@@ -386,9 +397,9 @@
                         <h3>Shopping Cart</h3>
                         <button onclick="toggleCart()" class="close-btn">✕</button>
                     </div>
-                    
+
                     <div id="cartItems" class="cart-items"></div>
-                    
+
                     <div id="cartFooter" class="cart-footer">
                         <div class="cart-total">
                             <div class="total-row">
@@ -426,11 +437,16 @@
                 <div class="dashboard-layout">
                     <div class="sidebar">
                         <nav class="sidebar-nav">
-                            <button onclick="showAdminTab('overview')" class="sidebar-btn active" data-tab="overview">Overview</button>
-                            <button onclick="showAdminTab('products')" class="sidebar-btn" data-tab="products">Manage Products</button>
-                            <button onclick="showAdminTab('orders')" class="sidebar-btn" data-tab="orders">Orders</button>
-                            <button onclick="showAdminTab('tracking')" class="sidebar-btn" data-tab="tracking">Order Tracking</button>
-                            <button onclick="showAdminTab('customers')" class="sidebar-btn" data-tab="customers">Customers</button>
+                            <button onclick="showAdminTab('overview')" class="sidebar-btn active"
+                                data-tab="overview">Overview</button>
+                            <button onclick="showAdminTab('products')" class="sidebar-btn" data-tab="products">Manage
+                                Products</button>
+                            <button onclick="showAdminTab('orders')" class="sidebar-btn"
+                                data-tab="orders">Orders</button>
+                            <button onclick="showAdminTab('tracking')" class="sidebar-btn" data-tab="tracking">Order
+                                Tracking</button>
+                            <button onclick="showAdminTab('customers')" class="sidebar-btn"
+                                data-tab="customers">Customers</button>
                         </nav>
                     </div>
 
@@ -456,7 +472,7 @@
                                     <p id="pendingOrders" class="stat-number">0</p>
                                 </div>
                             </div>
-                            
+
                             <div class="recent-activity">
                                 <h4>Recent Orders</h4>
                                 <div id="recentOrdersList" class="recent-orders"></div>
@@ -466,7 +482,7 @@
                         <!-- Products Management Tab -->
                         <div id="productsTab" class="tab-content">
                             <h3 class="tab-title">Product Management</h3>
-                            
+
                             <!-- Add Product Form -->
                             <div class="add-product-section">
                                 <h4>Add New Product</h4>
@@ -474,11 +490,13 @@
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label>Product Name *</label>
-                                            <input type="text" id="productName" required placeholder="Enter product name">
+                                            <input type="text" id="productName" required
+                                                placeholder="Enter product name">
                                         </div>
                                         <div class="form-group">
                                             <label>Price (KSh) *</label>
-                                            <input type="number" id="productPrice" required placeholder="Enter price in KSh" min="1">
+                                            <input type="number" id="productPrice" required
+                                                placeholder="Enter price in KSh" min="1">
                                         </div>
                                     </div>
                                     <div class="form-row">
@@ -495,12 +513,14 @@
                                         </div>
                                         <div class="form-group">
                                             <label>Stock Quantity *</label>
-                                            <input type="number" id="productStock" required placeholder="Enter stock quantity" min="0">
+                                            <input type="number" id="productStock" required
+                                                placeholder="Enter stock quantity" min="0">
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label>Product Description</label>
-                                        <textarea id="productDescription" rows="3" placeholder="Enter product description"></textarea>
+                                        <textarea id="productDescription" rows="3"
+                                            placeholder="Enter product description"></textarea>
                                     </div>
                                     <div class="form-group">
                                         <label>Image URL *</label>
@@ -514,7 +534,8 @@
                             <div class="product-management-section">
                                 <h4>Current Products</h4>
                                 <div class="product-filters">
-                                    <input type="text" id="adminProductSearch" placeholder="Search products..." onkeyup="filterAdminProducts()">
+                                    <input type="text" id="adminProductSearch" placeholder="Search products..."
+                                        onkeyup="filterAdminProducts()">
                                     <select id="adminCategoryFilter" onchange="filterAdminProducts()">
                                         <option value="">All Categories</option>
                                         <option value="Electronics">Electronics</option>
@@ -539,7 +560,8 @@
                                     <option value="Delivered">Delivered</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>
-                                <input type="text" id="orderSearchInput" placeholder="Search by Order ID or Customer..." onkeyup="filterOrders()">
+                                <input type="text" id="orderSearchInput" placeholder="Search by Order ID or Customer..."
+                                    onkeyup="filterOrders()">
                             </div>
                             <div id="adminOrdersList" class="orders-list"></div>
                         </div>
@@ -551,13 +573,14 @@
                                 <div class="tracking-form">
                                     <div class="form-group">
                                         <label>Enter Order ID</label>
-                                        <input type="text" id="adminTrackingOrderId" placeholder="Enter order ID to track">
+                                        <input type="text" id="adminTrackingOrderId"
+                                            placeholder="Enter order ID to track">
                                     </div>
                                     <button onclick="adminTrackOrder()" class="submit-btn">Track Order</button>
                                 </div>
                                 <div id="adminTrackingResult" class="tracking-result"></div>
                             </div>
-                            
+
                             <div class="bulk-tracking-section">
                                 <h4>All Orders Tracking Overview</h4>
                                 <div id="allOrdersTracking" class="tracking-overview"></div>
@@ -590,7 +613,7 @@
                             <p>Pay with your mobile money</p>
                         </div>
                     </div>
-                    
+
                     <div class="payment-method" onclick="selectPaymentMethod('card')">
                         <div class="payment-icon card-icon">💳</div>
                         <div>
@@ -598,7 +621,7 @@
                             <p>Pay with credit/debit card</p>
                         </div>
                     </div>
-                    
+
                     <div class="payment-method" onclick="selectPaymentMethod('cash')">
                         <div class="payment-icon cash-icon">💰</div>
                         <div>
@@ -623,15 +646,16 @@
                                 <li>Enter your M-Pesa PIN</li>
                                 <li>Confirm payment</li>
                             </ol>
-                            <p><strong>Note:</strong> After payment, click "Confirm Payment" below and enter the M-Pesa transaction code.</p>
+                            <p><strong>Note:</strong> After payment, click "Confirm Payment" below and enter the M-Pesa
+                                transaction code.</p>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>M-Pesa Transaction Code (Optional)</label>
                         <input type="text" id="transactionCode" placeholder="Enter M-Pesa transaction code">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Customer Phone Number *</label>
                         <input type="tel" id="customerPhone" required placeholder="Enter your phone number for M-Pesa">
@@ -654,6 +678,22 @@
         </div>
     </div>
 
-    <script type="module" src="Bidhaaline.js"></script>
+     
+    <script src="api/apiClient.js"></script>
+    <script src="api/config.js"></script>
+    <script src="utils/apiIntegration.js"></script>
+
+     
+    <script src="api/authService.js"></script>
+    <script src="api/adminService.js"></script>
+    <script src="api/cartService.js"></script>
+    <script src="api/inquiryService.js"></script>
+    <script src="api/orderService.js"></script>
+    <script src="api/paymentService.js"></script>
+    <script src="api/productService.js"></script>
+    <script src="api/trackingService.js"></script>
+
+   
 </body>
+
 </html>
