@@ -59,6 +59,63 @@ const API_CONFIG = {
     }
 };
 
+const localProducts = [
+    {
+        id: 'PRD001',
+        name: 'Samsung Galaxy S23',
+        price: 85000,
+        category: 'Electronics',
+        stock: 15,
+        image: 'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'Latest Samsung smartphone with advanced features'
+    },
+    {
+        id: 'PRD002',
+        name: 'Nike Air Max',
+        price: 12000,
+        category: 'Sports',
+        stock: 25,
+        image: 'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'Comfortable running shoes for athletes'
+    },
+    {
+        id: 'PRD003',
+        name: 'MacBook Pro',
+        price: 180000,
+        category: 'Electronics',
+        stock: 8,
+        image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'High-performance laptop for professionals'
+    },
+    {
+        id: 'PRD004',
+        name: 'Designer Dress',
+        price: 8500,
+        category: 'Fashion',
+        stock: 12,
+        image: 'https://images.pexels.com/photos/985635/pexels-photo-985635.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'Elegant dress for special occasions'
+    },
+    {
+        id: 'PRD005',
+        name: 'Coffee Maker',
+        price: 15000,
+        category: 'Home',
+        stock: 20,
+        image: 'https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'Automatic coffee maker for perfect brew'
+    },
+    {
+        id: 'PRD006',
+        name: 'Organic Honey',
+        price: 1200,
+        category: 'Food',
+        stock: 50,
+        image: 'https://images.pexels.com/photos/1485637/pexels-photo-1485637.jpeg?auto=compress&cs=tinysrgb&w=300',
+        description: 'Pure organic honey from local farmers'
+    }
+];
+
 // API Client Class
 class ApiClient {
     constructor() {
@@ -1386,49 +1443,595 @@ async function renderAdminDashboard() {
 
 async function renderAdminProducts() {
     try {
-        const res = await apiClient.get('/admin/products');
-        const products = res.data.products;
-        const container = document.getElementById('adminProductsList');
-        container.innerHTML = '';
+        // Try to get from API first, fallback to local data
+        let products = localProducts;
+        
+        try {
+            const response = await apiServices.products.getAllProducts();
+            if (response && response.products) {
+                products = response.products;
+            }
+        } catch (error) {
+            console.log('Using local products data');
+        }
 
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.classList.add('admin-product-card');
-            div.innerHTML = `
-                <img src="${product.image_url}" alt="${product.name}" />
-                <h4>${product.name}</h4>
-                <p>KSh ${product.price}</p>
-                <p>Stock: ${product.stock}</p>
-                <button onclick="editProduct('${product.id}')">Edit</button>
-                <button onclick="deleteProduct('${product.id}')">Delete</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Product Load Error:', err);
+        const container = document.getElementById('adminProductsList');
+        if (!container) return;
+
+        if (products.length === 0) {
+            container.innerHTML = '<div class="empty-state">No products found.</div>';
+            return;
+        }
+
+        container.innerHTML = products.map(product => `
+            <div class="admin-product-card">
+                <div class="product-image-container">
+                    <img src="${product.image_url || product.image}" alt="${product.name}" 
+                         onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
+                </div>
+                <div class="product-details">
+                    <div class="product-id">${product.id}</div>
+                    <h4 class="product-name">${product.name}</h4>
+                    <p class="product-price">${formatPrice(product.price)}</p>
+                    <p class="product-category">Category: ${product.category}</p>
+                    <p class="product-stock ${getStockStatus(product.stock)}">
+                        Stock: ${product.stock} ${getStockStatusText(product.stock)}
+                    </p>
+                    <div class="product-actions">
+                        <button onclick="editProduct('${product.id}')" class="edit-btn">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="deleteProduct('${product.id}')" class="delete-btn">
+                            🗑️ Delete
+                        </button>
+                        <button onclick="viewProductDetails('${product.id}')" class="view-btn">
+                            👁️ View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Failed to load admin products:', error);
+        showNotification('Failed to load products', 'error');
     }
 }
 
 async function renderAdminOrders() {
     try {
-        const res = await apiClient.get('/admin/orders');
-        const orders = res.data.orders;
-        const container = document.getElementById('adminOrdersList');
-        container.innerHTML = '';
+        // Try to get from API first, fallback to local data
+        let adminOrders = orders;
+        
+        try {
+            const response = await apiClient.get(API_CONFIG.ENDPOINTS.ADMIN.ORDERS);
+            if (response && response.data && response.data.orders) {
+                adminOrders = response.data.orders;
+            }
+        } catch (error) {
+            console.log('Using local orders data');
+        }
 
-        orders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('order-card');
-            div.innerHTML = `
-                <strong>Order #${order.id}</strong> - ${order.status}<br>
-                <p>${order.customer_name} (${order.customer_email})</p>
-                <p>Total: KSh ${order.total_amount}</p>
-                <button onclick="showOrderDetails('${order.id}')">Details</button>
+        const container = document.getElementById('adminOrdersList');
+        if (!container) return;
+
+        if (adminOrders.length === 0) {
+            container.innerHTML = '<div class="empty-state">No orders found.</div>';
+            return;
+        }
+
+        container.innerHTML = adminOrders.map(order => `
+            <div class="admin-order-card">
+                <div class="order-header">
+                    <div class="order-main-info">
+                        <span class="order-id" onclick="showOrderDetails('${order.id}')">#${order.id}</span>
+                        <span class="order-date">${new Date(order.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="order-status-section">
+                        <span class="order-status status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                        <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
+                            <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                            <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                            <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="order-customer-info">
+                    <div><strong>Customer:</strong> ${order.customer_name}</div>
+                    <div><strong>Email:</strong> ${order.customer_email}</div>
+                    <div><strong>Phone:</strong> ${order.customer_phone}</div>
+                    <div><strong>Payment:</strong> ${order.payment_method?.toUpperCase()}</div>
+                </div>
+                
+                <div class="order-summary">
+                    <div class="order-total"><strong>Total: ${formatPrice(order.total_amount)}</strong></div>
+                    <div class="order-items-count">${order.items.length} item(s)</div>
+                </div>
+                
+                <div class="order-actions">
+                    <button onclick="showOrderDetails('${order.id}')" class="view-details-btn">
+                        📋 View Details
+                    </button>
+                    <button onclick="adminTrackSpecificOrder('${order.id}')" class="track-btn">
+                        📍 Track Order
+                    </button>
+                    <button onclick="printOrderInvoice('${order.id}')" class="print-btn">
+                        🖨️ Print Invoice
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Failed to load admin orders:', error);
+        showNotification('Failed to load orders', 'error');
+    }
+}
+async function renderAdminTracking() {
+    try {
+        // Display all orders with their tracking status
+        const container = document.getElementById('allOrdersTracking');
+        if (!container) return;
+
+        if (orders.length === 0) {
+            container.innerHTML = '<div class="empty-state">No orders to track.</div>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="tracking-overview-grid">
+                ${orders.map(order => `
+                    <div class="tracking-overview-card">
+                        <div class="tracking-card-header">
+                            <span class="order-id">#${order.id}</span>
+                            <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                        </div>
+                        <div class="tracking-card-details">
+                            <div><strong>Customer:</strong> ${order.customer_name}</div>
+                            <div><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</div>
+                            <div><strong>Total:</strong> ${formatPrice(order.total_amount)}</div>
+                        </div>
+                        <div class="tracking-card-actions">
+                            <button onclick="adminTrackSpecificOrder('${order.id}')" class="track-detail-btn">
+                                Track Details
+                            </button>
+                            <button onclick="updateTrackingStatus('${order.id}')" class="update-tracking-btn">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Failed to load tracking overview:', error);
+        showNotification('Failed to load tracking data', 'error');
+    }
+}
+async function adminTrackOrder() {
+    try {
+        const orderId = document.getElementById('adminTrackingOrderId')?.value.trim();
+        if (!orderId) {
+            showNotification('Please enter an order ID!', 'error');
+            return;
+        }
+
+        await adminTrackSpecificOrder(orderId);
+        
+    } catch (error) {
+        const container = document.getElementById('adminTrackingResult');
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">Order not found. Please check the order ID and try again.</div>
             `;
-            container.appendChild(div);
+        }
+    }
+}
+async function adminTrackSpecificOrder(orderId) {
+    try {
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) {
+            showNotification('Order not found', 'error');
+            return;
+        }
+
+        // Generate mock tracking history
+        const trackingHistory = generateTrackingHistory(order);
+        
+        const container = document.getElementById('adminTrackingResult');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="admin-tracking-details">
+                <div class="tracking-order-info">
+                    <h4>Order #${order.id} Tracking</h4>
+                    <div class="order-quick-info">
+                        <span>Customer: ${order.customer_name}</span>
+                        <span>Status: <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span></span>
+                        <span>Total: ${formatPrice(order.total_amount)}</span>
+                    </div>
+                </div>
+                
+                <div class="admin-tracking-timeline">
+                    <h5>Tracking Timeline</h5>
+                    ${trackingHistory.map(track => `
+                        <div class="admin-tracking-step ${track.completed ? 'completed' : 'pending'}">
+                            <div class="tracking-icon">${track.icon}</div>
+                            <div class="tracking-content">
+                                <div class="tracking-status">${track.status}</div>
+                                <div class="tracking-description">${track.description}</div>
+                                <div class="tracking-date">${track.date}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="admin-tracking-actions">
+                    <button onclick="updateTrackingStatus('${orderId}')" class="update-status-btn">
+                        📝 Update Status
+                    </button>
+                    <button onclick="addTrackingNote('${orderId}')" class="add-note-btn">
+                        📄 Add Note
+                    </button>
+                    <button onclick="notifyCustomer('${orderId}')" class="notify-btn">
+                        📧 Notify Customer
+                    </button>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        showNotification('Failed to load order tracking', 'error');
+    }
+}
+function generateTrackingHistory(order) {
+    const history = [
+        {
+            status: 'Order Placed',
+            description: `Order #${order.id} has been placed successfully`,
+            date: new Date(order.created_at).toLocaleDateString(),
+            icon: '📝',
+            completed: true
+        }
+    ];
+
+    if (order.status !== 'Cancelled') {
+        history.push({
+            status: 'Payment Confirmed',
+            description: 'Payment has been confirmed and order is being processed',
+            date: new Date(order.created_at).toLocaleDateString(),
+            icon: '💳',
+            completed: true
         });
-    } catch (err) {
-        console.error('Orders Load Error:', err);
+
+        if (order.status === 'Processing' || order.status === 'Shipped' || order.status === 'Delivered') {
+            history.push({
+                status: 'Processing',
+                description: 'Order is being prepared for shipment',
+                date: new Date(order.created_at).toLocaleDateString(),
+                icon: '⚙️',
+                completed: true
+            });
+        }
+
+        if (order.status === 'Shipped' || order.status === 'Delivered') {
+            history.push({
+                status: 'Shipped',
+                description: 'Order has been shipped and is on the way',
+                date: new Date(Date.now() - 86400000).toLocaleDateString(),
+                icon: '🚚',
+                completed: true
+            });
+        }
+
+        if (order.status === 'Delivered') {
+            history.push({
+                status: 'Delivered',
+                description: 'Order has been delivered successfully',
+                date: new Date().toLocaleDateString(),
+                icon: '✅',
+                completed: true
+            });
+        }
+
+        // Add pending steps
+        if (order.status === 'Processing') {
+            history.push({
+                status: 'Shipping',
+                description: 'Order will be shipped soon',
+                date: 'Pending',
+                icon: '🚚',
+                completed: false
+            });
+        }
+        
+        if (order.status !== 'Delivered') {
+            history.push({
+                status: 'Delivery',
+                description: 'Order will be delivered to customer',
+                date: 'Pending',
+                icon: '✅',
+                completed: false
+            });
+        }
+    } else {
+        history.push({
+            status: 'Cancelled',
+            description: 'Order has been cancelled',
+            date: new Date().toLocaleDateString(),
+            icon: '❌',
+            completed: true
+        });
+    }
+
+    return history;
+}
+function editProduct(productId) {
+    const product = localProducts.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    // Pre-fill the form with product data
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productCategory').value = product.category;
+    document.getElementById('productStock').value = product.stock;
+    document.getElementById('productDescription').value = product.description || '';
+    document.getElementById('productImage').value = product.image_url || product.image;
+
+    // Change form to edit mode
+    const form = document.getElementById('addProductForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Update Product';
+    submitBtn.onclick = function(e) {
+        e.preventDefault();
+        updateProduct(productId);
+    };
+
+    // Scroll to form
+    document.querySelector('.add-product-section').scrollIntoView({ behavior: 'smooth' });
+    showNotification('Product loaded for editing', 'info');
+}
+
+function updateProduct(productId) {
+    const productIndex = localProducts.findIndex(p => p.id === productId);
+    if (productIndex === -1) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    // Update product data
+    localProducts[productIndex] = {
+        ...localProducts[productIndex],
+        name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        category: document.getElementById('productCategory').value,
+        stock: parseInt(document.getElementById('productStock').value),
+        description: document.getElementById('productDescription').value,
+        image: document.getElementById('productImage').value
+    };
+
+    // Reset form
+    document.getElementById('addProductForm').reset();
+    const submitBtn = document.querySelector('#addProductForm button[type="submit"]');
+    submitBtn.textContent = 'Add Product';
+    submitBtn.onclick = null;
+
+    // Refresh products display
+    renderAdminProducts();
+    showNotification('Product updated successfully!', 'success');
+}
+
+function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) {
+        return;
+    }
+
+    const productIndex = localProducts.findIndex(p => p.id === productId);
+    if (productIndex !== -1) {
+        localProducts.splice(productIndex, 1);
+        renderAdminProducts();
+        showNotification('Product deleted successfully!', 'success');
+    } else {
+        showNotification('Product not found', 'error');
+    }
+}
+
+function viewProductDetails(productId) {
+    const product = localProducts.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    // Create and show product details modal
+    const modal = document.createElement('div');
+    modal.className = 'payment-modal';
+    modal.innerHTML = `
+        <div class="payment-content">
+            <div class="payment-header">
+                <h3>Product Details</h3>
+                <button onclick="this.closest('.payment-modal').remove()" class="close-btn">✕</button>
+            </div>
+            <div class="product-details-content">
+                <div class="product-detail-image">
+                    <img src="${product.image_url || product.image}" alt="${product.name}" 
+                         onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
+                </div>
+                <div class="product-detail-info">
+                    <h4>${product.name}</h4>
+                    <p><strong>ID:</strong> ${product.id}</p>
+                    <p><strong>Price:</strong> ${formatPrice(product.price)}</p>
+                    <p><strong>Category:</strong> ${product.category}</p>
+                    <p><strong>Stock:</strong> ${product.stock} items</p>
+                    <p><strong>Status:</strong> <span class="${getStockStatus(product.stock)}">${getStockStatusText(product.stock)}</span></p>
+                    ${product.description ? `<p><strong>Description:</strong> ${product.description}</p>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Order Management Functions
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const orderIndex = orders.findIndex(o => o.id === orderId);
+        if (orderIndex !== -1) {
+            orders[orderIndex].status = newStatus;
+            renderAdminOrders();
+            showNotification(`Order ${orderId} status updated to ${newStatus}`, 'success');
+        }
+    } catch (error) {
+        showNotification('Failed to update order status', 'error');
+    }
+}
+
+function printOrderInvoice(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
+
+    // Generate and print invoice
+    const invoiceWindow = window.open('', '_blank');
+    invoiceWindow.document.write(`
+        <html>
+        <head>
+            <title>Invoice - Order #${order.id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                .order-details { margin: 20px 0; }
+                .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                .items-table th, .items-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                .total { text-align: right; font-weight: bold; font-size: 1.2em; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Bidhaaline</h1>
+                <h2>Invoice - Order #${order.id}</h2>
+            </div>
+            <div class="order-details">
+                <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                <p><strong>Customer:</strong> ${order.customer_name}</p>
+                <p><strong>Email:</strong> ${order.customer_email}</p>
+                <p><strong>Phone:</strong> ${order.customer_phone}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.items.map(item => `
+                        <tr>
+                            <td>${item.product_name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${formatPrice(item.product_price)}</td>
+                            <td>${formatPrice(item.total_price)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <div class="total">
+                <p>Total: ${formatPrice(order.total_amount)}</p>
+            </div>
+        </body>
+        </html>
+    `);
+    invoiceWindow.document.close();
+    invoiceWindow.print();
+}
+
+// Filter Functions
+function filterAdminProducts() {
+    const searchTerm = document.getElementById('adminProductSearch')?.value.toLowerCase() || '';
+    const category = document.getElementById('adminCategoryFilter')?.value || '';
+    
+    let filteredProducts = [...localProducts];
+    
+    if (searchTerm) {
+        filteredProducts = filteredProducts.filter(product =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.id.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    if (category) {
+        filteredProducts = filteredProducts.filter(product => product.category === category);
+    }
+    
+    // Update display (you can implement this to show filtered results)
+    renderAdminProducts();
+}
+
+function filterOrders() {
+    const status = document.getElementById('orderStatusFilter')?.value || '';
+    const searchTerm = document.getElementById('orderSearchInput')?.value.toLowerCase() || '';
+    
+    // Filter logic here - you can implement this to show filtered orders
+    renderAdminOrders();
+}
+
+// Add Product Form Handler
+document.addEventListener('DOMContentLoaded', function() {
+    const addProductForm = document.getElementById('addProductForm');
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newProduct = {
+                id: generateProductId(),
+                name: document.getElementById('productName').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value,
+                stock: parseInt(document.getElementById('productStock').value),
+                description: document.getElementById('productDescription').value,
+                image: document.getElementById('productImage').value
+            };
+            
+            localProducts.push(newProduct);
+            addProductForm.reset();
+            renderAdminProducts();
+            showNotification('Product added successfully!', 'success');
+        });
+    }
+});
+
+// Additional helper functions for tracking
+function updateTrackingStatus(orderId) {
+    const newStatus = prompt('Enter new status (Processing, Shipped, Delivered, Cancelled):');
+    if (newStatus) {
+        updateOrderStatus(orderId, newStatus);
+    }
+}
+
+function addTrackingNote(orderId) {
+    const note = prompt('Add tracking note:');
+    if (note) {
+        showNotification('Tracking note added', 'success');
+    }
+}
+
+function notifyCustomer(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        showNotification(`Customer ${order.customer_name} has been notified about order ${orderId}`, 'success');
     }
 }
 
@@ -1776,3 +2379,20 @@ window.showOrderDetails = showOrderDetails;
 window.hideOrderDetailsModal = hideOrderDetailsModal;
 window.filterProducts = filterProducts;
 window.submitInquiry = submitInquiry;
+
+window.renderAdminProducts = renderAdminProducts;
+window.renderAdminOrders = renderAdminOrders;
+window.renderAdminTracking = renderAdminTracking;
+window.adminTrackOrder = adminTrackOrder;
+window.adminTrackSpecificOrder = adminTrackSpecificOrder;
+window.editProduct = editProduct;
+window.updateProduct = updateProduct;
+window.deleteProduct = deleteProduct;
+window.viewProductDetails = viewProductDetails;
+window.updateOrderStatus = updateOrderStatus;
+window.printOrderInvoice = printOrderInvoice;
+window.filterAdminProducts = filterAdminProducts;
+window.filterOrders = filterOrders;
+window.updateTrackingStatus = updateTrackingStatus;
+window.addTrackingNote = addTrackingNote;
+window.notifyCustomer = notifyCustomer;
