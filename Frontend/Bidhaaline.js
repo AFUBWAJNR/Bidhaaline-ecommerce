@@ -3,8 +3,11 @@ let currentUser = null;
 let currentPage = 'home';
 let currentLoginType = null;
 let cart = [];
+let products = [];
 let orders = [];
 let customers = [];
+let isLoggedIn = false;
+let userRole = 'customer';
 let selectedPaymentMethod = 'mpesa';
 let currentOrderId = null;
 
@@ -102,7 +105,6 @@ class ApiClient {
             return data;
         } catch (error) {
             console.error('API Request Error:', error);
-            // If backend is not available, show a user-friendly message
             if (error.message.includes('Failed to fetch')) {
                 showNotification('Unable to connect to server. Using offline mode.', 'error');
                 return { status: 'error', message: 'Backend not available' };
@@ -169,7 +171,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local authentication if backend is not available
                 if (error.message.includes('Backend not available')) {
                     return this.localLogin(email, password);
                 }
@@ -188,7 +189,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local registration if backend is not available
                 if (error.message.includes('Backend not available')) {
                     return this.localRegister(userData);
                 }
@@ -287,7 +287,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local products if backend is not available
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalProducts(filters);
                 }
@@ -305,7 +304,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local products
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalProductById(productId);
                 }
@@ -322,7 +320,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local products
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalFeaturedProducts();
                 }
@@ -393,7 +390,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local cart
                 if (error.message.includes('Backend not available')) {
                     return this.addToLocalCart(productId, quantity);
                 }
@@ -410,7 +406,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local cart
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalCart();
                 }
@@ -507,7 +502,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local order creation
                 if (error.message.includes('Backend not available')) {
                     return this.createLocalOrder(orderData);
                 }
@@ -525,7 +519,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local orders
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalOrders();
                 }
@@ -724,7 +717,6 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
-                // Fallback to local stats
                 if (error.message.includes('Backend not available')) {
                     return this.getLocalDashboardStats();
                 }
@@ -856,6 +848,8 @@ async function login(email, password) {
     try {
         const userData = await apiServices.auth.login(email, password);
         currentUser = userData.user;
+        isLoggedIn = true;
+        userRole = currentUser.role;
 
         if (currentUser.role === 'admin') {
             showPage('admin');
@@ -863,7 +857,7 @@ async function login(email, password) {
             showPage('dashboard');
         }
 
-        showNotification('Login successful!');
+        showNotification('Login successful!', 'success');
         return true;
     } catch (error) {
         showNotification(error.message, 'error');
@@ -875,7 +869,9 @@ async function register(userData) {
     try {
         const result = await apiServices.auth.register(userData);
         currentUser = result.user;
-        showNotification('Registration successful!');
+        isLoggedIn = true;
+        userRole = currentUser.role;
+        showNotification('Registration successful!', 'success');
         return true;
     } catch (error) {
         showNotification(error.message, 'error');
@@ -888,9 +884,11 @@ function logout() {
     currentUser = null;
     currentLoginType = null;
     cart = [];
+    isLoggedIn = false;
+    userRole = 'customer';
     showPage('home');
     updateCartDisplay();
-    showNotification('Logged out successfully!');
+    showNotification('Logged out successfully!', 'info');
 }
 
 // Product Functions
@@ -904,11 +902,14 @@ async function renderFeaturedProducts() {
             <div class="product-card fade-in">
                 <div class="product-id">${product.id}</div>
                 <div class="stock-status ${getStockStatus(product.stock)}">${getStockStatusText(product.stock)}</div>
-                <img src="${product.image_url || product.image}" alt="${product.name}" class="product-image">
+                <img src="${product.image_url || product.image}" alt="${product.name}" class="product-image" onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
                 <div class="product-info">
                     <h4 class="product-name">${product.name}</h4>
                     <p class="product-price">${formatPrice(product.price)}</p>
                     <p class="product-stock">Stock: ${product.stock} items</p>
+                    <button onclick="addToCart('${product.id}')" class="add-to-cart-btn" ${product.stock === 0 ? 'disabled' : ''}>
+                        ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -936,7 +937,7 @@ async function renderAllProducts() {
             <div class="product-card fade-in">
                 <div class="product-id">${product.id}</div>
                 <div class="stock-status ${getStockStatus(product.stock)}">${getStockStatusText(product.stock)}</div>
-                <img src="${product.image_url || product.image}" alt="${product.name}" class="product-image">
+                <img src="${product.image_url || product.image}" alt="${product.name}" class="product-image" onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
                 <div class="product-info">
                     <h4 class="product-name">${product.name}</h4>
                     <p class="product-price">${formatPrice(product.price)}</p>
@@ -959,14 +960,14 @@ function filterProducts() {
 // Cart Functions
 async function addToCart(productId) {
     try {
-        if (!apiServices.auth.isAuthenticated()) {
-            showNotification('Please login to add items to cart', 'error');
+        if (!isLoggedIn) {
+            showNotification('Please login to add items to cart', 'warning');
             return;
         }
 
         await apiServices.cart.addToCart(productId, 1);
         await updateCartDisplay();
-        showNotification('Product added to cart!');
+        showNotification('Product added to cart!', 'success');
     } catch (error) {
         showNotification(error.message, 'error');
     }
@@ -974,7 +975,7 @@ async function addToCart(productId) {
 
 async function updateCartDisplay() {
     try {
-        if (!apiServices.auth.isAuthenticated()) {
+        if (!isLoggedIn) {
             const cartCount = document.getElementById('cartCount');
             if (cartCount) {
                 cartCount.textContent = '0';
@@ -1018,7 +1019,7 @@ function toggleCart() {
 
 async function renderCartItems() {
     try {
-        if (!apiServices.auth.isAuthenticated()) {
+        if (!isLoggedIn) {
             const container = document.getElementById('cartItems');
             if (container) {
                 container.innerHTML = '<div class="empty-state">Please login to view cart</div>';
@@ -1087,7 +1088,7 @@ async function removeFromCart(cartItemId) {
         await apiServices.cart.removeFromCart(cartItemId);
         await updateCartDisplay();
         await renderCartItems();
-        showNotification('Item removed from cart');
+        showNotification('Item removed from cart', 'info');
     } catch (error) {
         showNotification(error.message, 'error');
     }
@@ -1168,7 +1169,7 @@ async function confirmPayment() {
                 apiServices.payments.pollPaymentStatus(paymentResult.checkoutRequestId)
                     .then(result => {
                         if (result.localTransaction.status === 'success') {
-                            showNotification('Payment successful! Your order has been confirmed.');
+                            showNotification('Payment successful! Your order has been confirmed.', 'success');
                         } else {
                             showNotification('Payment failed. Please try again.', 'error');
                         }
@@ -1186,7 +1187,7 @@ async function confirmPayment() {
         hidePaymentModal();
         toggleCart();
 
-        showNotification(`Order placed successfully! Order ID: ${order.id}`);
+        showNotification(`Order placed successfully! Order ID: ${order.id}`, 'success');
         await renderOrders();
 
     } catch (error) {
@@ -1197,7 +1198,7 @@ async function confirmPayment() {
 // Order Functions
 async function renderOrders() {
     try {
-        if (!apiServices.auth.isAuthenticated()) return;
+        if (!isLoggedIn) return;
 
         const orders = await apiServices.orders.getUserOrders();
         const container = document.getElementById('ordersList');
@@ -1243,7 +1244,7 @@ async function cancelOrder(orderId) {
     try {
         if (confirm('Are you sure you want to cancel this order?')) {
             await apiServices.orders.cancelOrder(orderId);
-            showNotification('Order cancelled successfully!');
+            showNotification('Order cancelled successfully!', 'success');
             await renderOrders();
             await renderAllProducts(); // Refresh products to show updated stock
         }
@@ -1356,15 +1357,6 @@ function showDashboardTab(tabName) {
 }
 
 // Admin Functions
-// async function renderAdminDashboard() {
-//     if (!currentUser || currentUser.role !== 'admin') return;
-
-//     await updateAdminStats();
-//     await renderFeaturedProducts();
-//     await renderOrders();
-//     await renderAdminCustomers();
-//     renderAllProducts(); // Use same products for admin
-// }
 async function renderAdminDashboard() {
     try {
         const res = await apiClient.get('/admin/dashboard');
@@ -1391,6 +1383,7 @@ async function renderAdminDashboard() {
         console.error('Dashboard Load Error:', err);
     }
 }
+
 async function renderAdminProducts() {
     try {
         const res = await apiClient.get('/admin/products');
@@ -1415,6 +1408,7 @@ async function renderAdminProducts() {
         console.error('Product Load Error:', err);
     }
 }
+
 async function renderAdminOrders() {
     try {
         const res = await apiClient.get('/admin/orders');
@@ -1437,6 +1431,7 @@ async function renderAdminOrders() {
         console.error('Orders Load Error:', err);
     }
 }
+
 async function renderAdminCustomers() {
     try {
         const res = await apiClient.get('/admin/customers');
@@ -1461,7 +1456,6 @@ async function renderAdminCustomers() {
     }
 }
 
-
 function showAdminTab(tabName) {
     // Update sidebar buttons
     document.querySelectorAll('.sidebar-btn').forEach(btn => {
@@ -1480,23 +1474,22 @@ function showAdminTab(tabName) {
     // Load tab-specific content
     switch (tabName) {
         case 'overview':
-            updateAdminStats();          
+            renderAdminDashboard();
             break;
         case 'products':
-            renderAdminProducts();         
+            renderAdminProducts();
             break;
         case 'orders':
-            renderAdminOrders();            
+            renderAdminOrders();
             break;
         case 'tracking':
-            renderAdminTracking();         
+            renderAdminTracking();
             break;
         case 'customers':
-            renderAdminCustomers();         
+            renderAdminCustomers();
             break;
     }
 }
-
 
 async function updateAdminStats() {
     try {
@@ -1532,7 +1525,7 @@ async function updateAdminStats() {
 async function submitInquiry(inquiryData) {
     try {
         await apiServices.inquiries.submitInquiry(inquiryData);
-        showNotification('Inquiry submitted successfully! We will get back to you soon.');
+        showNotification('Inquiry submitted successfully! We will get back to you soon.', 'success');
 
         // Clear form
         document.getElementById('inquiryForm').reset();
@@ -1597,7 +1590,9 @@ function showNotification(message, type = 'success') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'error' ? '#ef4444' : '#10b981'};
+        background: ${type === 'error' ? '#ef4444' : 
+                     type === 'warning' ? '#f59e0b' : 
+                     type === 'info' ? '#3b82f6' : '#10b981'};
         color: white;
         padding: 1rem 1.5rem;
         border-radius: 0.75rem;
@@ -1606,7 +1601,9 @@ function showNotification(message, type = 'success') {
         animation: slideIn 0.3s ease-out;
         max-width: 400px;
         font-weight: 500;
-        border: 1px solid ${type === 'error' ? '#dc2626' : '#059669'};
+        border: 1px solid ${type === 'error' ? '#dc2626' : 
+                           type === 'warning' ? '#d97706' : 
+                           type === 'info' ? '#2563eb' : '#059669'};
     `;
     notification.textContent = message;
 
@@ -1640,14 +1637,14 @@ function showNotification(message, type = 'success') {
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function () {
     // Check if user is already logged in
-    if (apiServices.auth.isAuthenticated()) {
-        currentUser = apiServices.auth.getCurrentUser();
-        console.log('Logged-in user:', currentUser);
-
-        if (currentUser.role === 'admin') {
-            renderAdminDashboard();
-        }
-        updateCartDisplay();
+    const savedUser = localStorage.getItem('currentUser');
+    const savedToken = localStorage.getItem('authToken');
+    
+    if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        apiClient.setToken(savedToken);
+        isLoggedIn = true;
+        userRole = currentUser.role;
     }
 
     // Initialize the application
@@ -1717,7 +1714,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const updatedUser = await apiServices.auth.updateProfile(profileData);
             currentUser = updatedUser;
-            showNotification('Profile updated successfully!');
+            showNotification('Profile updated successfully!', 'success');
         } catch (error) {
             showNotification(error.message, 'error');
         }
