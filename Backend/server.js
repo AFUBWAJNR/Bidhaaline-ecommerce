@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 app.use(cors({
-    origin: [ 'https://bidhaaline-frontend-d795.vercel.app/'],
+    origin: [ 'https://bidhaaline-frontend-d795.vercel.app'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
