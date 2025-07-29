@@ -59,63 +59,99 @@ const API_CONFIG = {
     }
 };
 
-const localProducts = [
-    {
-        id: 'PRD001',
-        name: 'Samsung Galaxy S23',
-        price: 85000,
-        category: 'Electronics',
-        stock: 15,
-        image: 'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'Latest Samsung smartphone with advanced features'
-    },
-    {
-        id: 'PRD002',
-        name: 'Nike Air Max',
-        price: 12000,
-        category: 'Sports',
-        stock: 25,
-        image: 'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'Comfortable running shoes for athletes'
-    },
-    {
-        id: 'PRD003',
-        name: 'MacBook Pro',
-        price: 180000,
-        category: 'Electronics',
-        stock: 8,
-        image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'High-performance laptop for professionals'
-    },
-    {
-        id: 'PRD004',
-        name: 'Designer Dress',
-        price: 8500,
-        category: 'Fashion',
-        stock: 12,
-        image: 'https://images.pexels.com/photos/985635/pexels-photo-985635.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'Elegant dress for special occasions'
-    },
-    {
-        id: 'PRD005',
-        name: 'Coffee Maker',
-        price: 15000,
-        category: 'Home',
-        stock: 20,
-        image: 'https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'Automatic coffee maker for perfect brew'
-    },
-    {
-        id: 'PRD006',
-        name: 'Organic Honey',
-        price: 1200,
-        category: 'Food',
-        stock: 50,
-        image: 'https://images.pexels.com/photos/1485637/pexels-photo-1485637.jpeg?auto=compress&cs=tinysrgb&w=300',
-        description: 'Pure organic honey from local farmers'
-    }
-];
+if (!window.localProducts) {
+    window.localProducts = [
+        {
+            id: 'PRD001',
+            name: 'Samsung Galaxy S23',
+            price: 85000,
+            category: 'Electronics',
+            stock: 15,
+            image: 'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg?auto=compress&cs=tinysrgb&w=300',
+            description: 'Latest Samsung smartphone with advanced features'
+        },
+        {
+            id: 'PRD002',
+            name: 'Nike Air Max',
+            price: 12000,
+            category: 'Sports',
+            stock: 25,
+            image: 'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=300',
+            description: 'Comfortable running shoes for athletes'
+        },
+        {
+            id: 'PRD003',
+            name: 'MacBook Pro',
+            price: 180000,
+            category: 'Electronics',
+            stock: 8,
+            image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=300',
+            description: 'High-performance laptop for professionals'
+        },
+        {
+            id: 'PRD004',
+            name: 'Designer Dress',
+            price: 8500,
+            category: 'Fashion',
+            stock: 12,
+            image: 'https://images.pexels.com/photos/985635/pexels-photo-985635.jpeg?auto=compress&cs=tinysrgb&w=300',
+            description: 'Elegant dress for special occasions'
+        }
+    ];
+}
 
+ 
+if (orders.length === 0) {
+    orders = [
+        {
+            id: 'ORD001',
+            customer_name: 'John Doe',
+            customer_email: 'john@example.com',
+            customer_phone: '0712345678',
+            status: 'Processing',
+            total_amount: 97000,
+            payment_method: 'mpesa',
+            created_at: new Date().toISOString(),
+            items: [
+                {
+                    product_id: 'PRD001',
+                    product_name: 'Samsung Galaxy S23',
+                    product_price: 85000,
+                    quantity: 1,
+                    total_price: 85000
+                },
+                {
+                    product_id: 'PRD002',
+                    product_name: 'Nike Air Max',
+                    product_price: 12000,
+                    quantity: 1,
+                    total_price: 12000
+                }
+            ]
+        },
+        {
+            id: 'ORD002',
+            customer_name: 'Jane Smith',
+            customer_email: 'jane@example.com',
+            customer_phone: '0723456789',
+            status: 'Shipped',
+            total_amount: 180000,
+            payment_method: 'card',
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+            items: [
+                {
+                    product_id: 'PRD003',
+                    product_name: 'MacBook Pro',
+                    product_price: 180000,
+                    quantity: 1,
+                    total_price: 180000
+                }
+            ]
+        }
+    ];
+}
+
+ 
 // API Client Class
 class ApiClient {
     constructor() {
@@ -2060,6 +2096,8 @@ async function renderAdminCustomers() {
 }
 
 function showAdminTab(tabName) {
+    console.log('Switching to admin tab:', tabName);
+    
     // Update sidebar buttons
     document.querySelectorAll('.sidebar-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -2077,20 +2115,22 @@ function showAdminTab(tabName) {
     // Load tab-specific content
     switch (tabName) {
         case 'overview':
-            renderAdminDashboard();
+            updateAdminStats();
             break;
         case 'products':
-            renderAdminProducts();
+            renderAdminProductsTab();
             break;
         case 'orders':
-            renderAdminOrders();
+            renderAdminOrdersTab();
             break;
         case 'tracking':
-            renderAdminTracking();
+            renderAdminTrackingTab();
             break;
         case 'customers':
             renderAdminCustomers();
             break;
+        default:
+            console.log('Unknown admin tab:', tabName);
     }
 }
 
@@ -2356,8 +2396,338 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+function renderAdminProductsTab() {
+    console.log('Rendering admin products tab');
+    
+    const container = document.getElementById('adminProductsList');
+    if (!container) {
+        console.error('Admin products container not found');
+        return;
+    }
 
-// Make functions globally available
+    try {
+        container.innerHTML = window.localProducts.map(product => `
+            <div class="admin-product-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; gap: 1rem;">
+                    <img src="${product.image}" alt="${product.name}" 
+                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;"
+                         onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.25rem;">${product.id}</div>
+                        <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${product.name}</h4>
+                        <p style="margin: 0.25rem 0; font-weight: bold; color: #059669;">${formatPrice(product.price)}</p>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #666;">Category: ${product.category}</p>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;">Stock: <span style="color: ${product.stock > 10 ? '#059669' : product.stock > 0 ? '#f59e0b' : '#ef4444'};">${product.stock} items</span></p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; min-width: 120px;">
+                        <button onclick="editAdminProduct('${product.id}')" 
+                                style="padding: 0.5rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="deleteAdminProduct('${product.id}')" 
+                                style="padding: 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                            🗑️ Delete
+                        </button>
+                        <button onclick="viewAdminProduct('${product.id}')" 
+                                style="padding: 0.5rem; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                            👁️ View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        console.log('Admin products rendered successfully');
+    } catch (error) {
+        console.error('Error rendering admin products:', error);
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">Failed to load products</div>';
+    }
+}
+
+// Admin Orders Tab Renderer
+function renderAdminOrdersTab() {
+    console.log('Rendering admin orders tab');
+    
+    const container = document.getElementById('adminOrdersList');
+    if (!container) {
+        console.error('Admin orders container not found');
+        return;
+    }
+
+    try {
+        if (orders.length === 0) {
+            container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">No orders found</div>';
+            return;
+        }
+
+        container.innerHTML = orders.map(order => `
+            <div class="admin-order-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">Order #${order.id}</h4>
+                        <p style="margin: 0.25rem 0; color: #666;">Date: ${new Date(order.created_at).toLocaleDateString()}</p>
+                        <p style="margin: 0.25rem 0; color: #666;">Customer: ${order.customer_name}</p>
+                        <p style="margin: 0.25rem 0; color: #666;">Phone: ${order.customer_phone}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <span style="background: ${getStatusColor(order.status)}; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">
+                                ${order.status}
+                            </span>
+                        </div>
+                        <p style="margin: 0; font-weight: bold; font-size: 1.1rem; color: #059669;">${formatPrice(order.total_amount)}</p>
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <strong>Items:</strong>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        ${order.items.map(item => `
+                            <li style="margin: 0.25rem 0;">${item.product_name} x ${item.quantity} - ${formatPrice(item.total_price)}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <select onchange="updateAdminOrderStatus('${order.id}', this.value)" 
+                            style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
+                        <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                        <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                    <button onclick="showOrderDetails('${order.id}')" 
+                            style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        📋 Details
+                    </button>
+                    <button onclick="trackAdminOrder('${order.id}')" 
+                            style="padding: 0.5rem 1rem; background: #059669; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        📍 Track
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        console.log('Admin orders rendered successfully');
+    } catch (error) {
+        console.error('Error rendering admin orders:', error);
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">Failed to load orders</div>';
+    }
+}
+
+// Admin Tracking Tab Renderer
+function renderAdminTrackingTab() {
+    console.log('Rendering admin tracking tab');
+    
+    const allOrdersContainer = document.getElementById('allOrdersTracking');
+    if (!allOrdersContainer) {
+        console.error('Admin tracking container not found');
+        return;
+    }
+
+    try {
+        if (orders.length === 0) {
+            allOrdersContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">No orders to track</div>';
+            return;
+        }
+
+        allOrdersContainer.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                ${orders.map(order => `
+                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="font-weight: bold;">#${order.id}</span>
+                            <span style="background: ${getStatusColor(order.status)}; color: white; padding: 0.25rem 0.5rem; border-radius: 1rem; font-size: 0.8rem;">
+                                ${order.status}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #666;">
+                            <div>Customer: ${order.customer_name}</div>
+                            <div>Date: ${new Date(order.created_at).toLocaleDateString()}</div>
+                            <div>Total: ${formatPrice(order.total_amount)}</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="trackAdminOrder('${order.id}')" 
+                                    style="flex: 1; padding: 0.5rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                                Track Details
+                            </button>
+                            <button onclick="updateOrderTracking('${order.id}')" 
+                                    style="flex: 1; padding: 0.5rem; background: #059669; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        console.log('Admin tracking rendered successfully');
+    } catch (error) {
+        console.error('Error rendering admin tracking:', error);
+        allOrdersContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">Failed to load tracking data</div>';
+    }
+}
+
+// Helper function to get status color
+function getStatusColor(status) {
+    switch (status.toLowerCase()) {
+        case 'processing': return '#f59e0b';
+        case 'shipped': return '#3b82f6';
+        case 'delivered': return '#059669';
+        case 'cancelled': return '#ef4444';
+        default: return '#6b7280';
+    }
+}
+
+// Product management functions
+function editAdminProduct(productId) {
+    const product = window.localProducts.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    const name = prompt('Edit product name:', product.name);
+    if (name !== null) {
+        const price = prompt('Edit product price:', product.price);
+        if (price !== null && !isNaN(price)) {
+            const stock = prompt('Edit product stock:', product.stock);
+            if (stock !== null && !isNaN(stock)) {
+                // Update the product
+                const productIndex = window.localProducts.findIndex(p => p.id === productId);
+                window.localProducts[productIndex] = {
+                    ...product,
+                    name: name.trim(),
+                    price: parseFloat(price),
+                    stock: parseInt(stock)
+                };
+                
+                renderAdminProductsTab();
+                showNotification('Product updated successfully!', 'success');
+            }
+        }
+    }
+}
+
+function deleteAdminProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        const index = window.localProducts.findIndex(p => p.id === productId);
+        if (index !== -1) {
+            window.localProducts.splice(index, 1);
+            renderAdminProductsTab();
+            showNotification('Product deleted successfully!', 'success');
+        }
+    }
+}
+
+function viewAdminProduct(productId) {
+    const product = window.localProducts.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    alert(`Product Details:\n\nID: ${product.id}\nName: ${product.name}\nPrice: ${formatPrice(product.price)}\nCategory: ${product.category}\nStock: ${product.stock}\nDescription: ${product.description || 'No description'}`);
+}
+
+// Order management functions
+function updateAdminOrderStatus(orderId, newStatus) {
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex !== -1) {
+        orders[orderIndex].status = newStatus;
+        renderAdminOrdersTab();
+        showNotification(`Order ${orderId} status updated to ${newStatus}`, 'success');
+    } else {
+        showNotification('Order not found', 'error');
+    }
+}
+
+function trackAdminOrder(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
+
+    const trackingInfo = `Order Tracking - #${orderId}\n\nCustomer: ${order.customer_name}\nStatus: ${order.status}\nDate: ${new Date(order.created_at).toLocaleDateString()}\nTotal: ${formatPrice(order.total_amount)}\n\nTracking History:\n✓ Order Placed\n${order.status !== 'Cancelled' ? '✓ Payment Confirmed\n' : ''}${order.status === 'Processing' || order.status === 'Shipped' || order.status === 'Delivered' ? '✓ Processing\n' : ''}${order.status === 'Shipped' || order.status === 'Delivered' ? '✓ Shipped\n' : ''}${order.status === 'Delivered' ? '✓ Delivered' : ''}${order.status === 'Cancelled' ? '❌ Cancelled' : ''}`;
+
+    alert(trackingInfo);
+}
+
+function updateOrderTracking(orderId) {
+    const newStatus = prompt('Enter new tracking status (Processing, Shipped, Delivered, Cancelled):');
+    if (newStatus) {
+        updateAdminOrderStatus(orderId, newStatus);
+    }
+}
+
+// Admin tracking function for the search
+function adminTrackOrder() {
+    const orderId = document.getElementById('adminTrackingOrderId')?.value.trim();
+    if (!orderId) {
+        showNotification('Please enter an order ID!', 'error');
+        return;
+    }
+
+    trackAdminOrder(orderId);
+    
+    // Clear the input
+    const input = document.getElementById('adminTrackingOrderId');
+    if (input) input.value = '';
+}
+
+// Add event listener for the add product form
+document.addEventListener('DOMContentLoaded', function() {
+    // Add product form handler
+    const addProductForm = document.getElementById('addProductForm');
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('productName')?.value;
+            const price = document.getElementById('productPrice')?.value;
+            const category = document.getElementById('productCategory')?.value;
+            const stock = document.getElementById('productStock')?.value;
+            const description = document.getElementById('productDescription')?.value;
+            const image = document.getElementById('productImage')?.value;
+            
+            if (!name || !price || !category || !stock || !image) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            const newProduct = {
+                id: generateProductId(),
+                name: name.trim(),
+                price: parseFloat(price),
+                category: category,
+                stock: parseInt(stock),
+                description: description?.trim() || '',
+                image: image.trim()
+            };
+            
+            window.localProducts.push(newProduct);
+            addProductForm.reset();
+            renderAdminProductsTab();
+            showNotification('Product added successfully!', 'success');
+        });
+    }
+});
+
+ 
+window.showAdminTab = showAdminTab;
+window.renderAdminProductsTab = renderAdminProductsTab;
+window.renderAdminOrdersTab = renderAdminOrdersTab;
+window.renderAdminTrackingTab = renderAdminTrackingTab;
+window.editAdminProduct = editAdminProduct;
+window.deleteAdminProduct = deleteAdminProduct;
+window.viewAdminProduct = viewAdminProduct;
+window.updateAdminOrderStatus = updateAdminOrderStatus;
+window.trackAdminOrder = trackAdminOrder;
+window.updateOrderTracking = updateOrderTracking;
+window.adminTrackOrder = adminTrackOrder;
+window.getStatusColor = getStatusColor;
+ 
 window.showPage = showPage;
 window.showLoginForm = showLoginForm;
 window.toggleRegister = toggleRegister;
