@@ -1905,40 +1905,48 @@ async function renderAdminTracking() {
 }
 
 function showAdminTab(tabName) {
-    // Update sidebar buttons
-    document.querySelectorAll('.sidebar-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
+  // Update sidebar buttons
+  document.querySelectorAll('.sidebar-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
 
-    // Update tab content visibility
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    const activeTab = document.getElementById(tabName + 'Tab');
-    if (activeTab) activeTab.classList.add('active');
+  // Update tab content visibility
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Map the tab names to the correct IDs
+  const tabMap = {
+    overview: 'overviewTab',
+    products: 'adminProductsTab',
+    orders: 'adminOrdersTab',
+    tracking: 'adminTrackingTab',
+    customers: 'customersTab'
+  };
+  
+  const activeTab = document.getElementById(tabMap[tabName]);
+  if (activeTab) activeTab.classList.add('active');
 
-    // Load tab-specific content
-    switch (tabName) {
-        case 'overview':
-            renderAdminDashboard();
-            break;
-        case 'products':
-            renderAdminProducts();
-            break;
-        case 'orders':
-            renderAdminOrders();
-            break;
-        case 'tracking':
-            renderAdminTracking();
-            break;
-        case 'customers':
-            renderAdminCustomers();
-            break;
-    }
+  // Load tab-specific content
+  switch (tabName) {
+    case 'overview':
+      renderAdminDashboard();
+      break;
+    case 'products':
+      renderAdminProducts();
+      break;
+    case 'orders':
+      renderAdminOrders();
+      break;
+    case 'tracking':
+      renderAdminTracking();
+      break;
+    case 'customers':
+      renderAdminCustomers();
+      break;
+  }
 }
-
 async function updateAdminStats() {
     try {
         const stats = await apiServices.admin.getDashboardStats();
