@@ -11,6 +11,64 @@ let userRole = 'customer';
 let selectedPaymentMethod = 'mpesa';
 let currentOrderId = null;
 
+// Local Products Data (for offline mode)
+const localProducts = [
+    {
+        id: 'PRD001',
+        name: 'Premium Coffee Beans',
+        price: 1500,
+        stock: 50,
+        category: 'Beverages',
+        image: 'https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/894695/pexels-photo-894695.jpeg?auto=compress&cs=tinysrgb&w=300'
+    },
+    {
+        id: 'PRD002',
+        name: 'Organic Honey',
+        price: 800,
+        stock: 30,
+        category: 'Food',
+        image: 'https://images.pexels.com/photos/33783/honey-jar-honey-organic.jpg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/33783/honey-jar-honey-organic.jpg?auto=compress&cs=tinysrgb&w=300'
+    },
+    {
+        id: 'PRD003',
+        name: 'Handmade Soap',
+        price: 350,
+        stock: 75,
+        category: 'Health & Beauty',
+        image: 'https://images.pexels.com/photos/6621409/pexels-photo-6621409.jpeg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/6621409/pexels-photo-6621409.jpeg?auto=compress&cs=tinysrgb&w=300'
+    },
+    {
+        id: 'PRD004',
+        name: 'Fresh Vegetables Bundle',
+        price: 600,
+        stock: 25,
+        category: 'Food',
+        image: 'https://images.pexels.com/photos/1300972/pexels-photo-1300972.jpeg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/1300972/pexels-photo-1300972.jpeg?auto=compress&cs=tinysrgb&w=300'
+    },
+    {
+        id: 'PRD005',
+        name: 'Traditional Spices Set',
+        price: 1200,
+        stock: 40,
+        category: 'Food',
+        image: 'https://images.pexels.com/photos/1630588/pexels-photo-1630588.jpeg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/1630588/pexels-photo-1630588.jpeg?auto=compress&cs=tinysrgb&w=300'
+    },
+    {
+        id: 'PRD006',
+        name: 'Artisan Jewelry',
+        price: 2500,
+        stock: 15,
+        category: 'Fashion',
+        image: 'https://images.pexels.com/photos/1191531/pexels-photo-1191531.jpeg?auto=compress&cs=tinysrgb&w=300',
+        image_url: 'https://images.pexels.com/photos/1191531/pexels-photo-1191531.jpeg?auto=compress&cs=tinysrgb&w=300'
+    }
+];
+
 // API Configuration
 const API_CONFIG = {
     BASE_URL: ' https://bidhaa-backend-2.onrender.com/api',
@@ -536,6 +594,9 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.getLocalOrderById(orderId);
+                }
                 throw new Error(error.message || 'Failed to fetch order');
             }
         },
@@ -551,6 +612,39 @@ const apiServices = {
                 throw new Error(response.message);
             } catch (error) {
                 throw new Error(error.message || 'Failed to cancel order');
+            }
+        },
+
+        async getAllOrders() {
+            try {
+                const response = await apiClient.get(API_CONFIG.ENDPOINTS.ADMIN.ORDERS);
+
+                if (response.status === 'success') {
+                    return response.data.orders;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.getAllLocalOrders();
+                }
+                throw new Error(error.message || 'Failed to fetch all orders');
+            }
+        },
+
+        async updateOrderStatus(orderId, status) {
+            try {
+                const endpoint = apiClient.replaceParams(API_CONFIG.ENDPOINTS.ADMIN.ORDER_STATUS, { id: orderId });
+                const response = await apiClient.patch(endpoint, { status });
+
+                if (response.status === 'success') {
+                    return response.data.order;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.updateLocalOrderStatus(orderId, status);
+                }
+                throw new Error(error.message || 'Failed to update order status');
             }
         },
 
@@ -589,6 +683,23 @@ const apiServices = {
             return orders.filter(order =>
                 currentUser && (order.customer_email === currentUser.email)
             );
+        },
+
+        getLocalOrderById(orderId) {
+            return orders.find(order => order.id === orderId);
+        },
+
+        getAllLocalOrders() {
+            return orders;
+        },
+
+        updateLocalOrderStatus(orderId, status) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = status;
+                return order;
+            }
+            throw new Error('Order not found');
         }
     },
 
@@ -673,6 +784,9 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.getLocalOrderTracking(orderId);
+                }
                 throw new Error(error.message || 'Failed to fetch order tracking');
             }
         },
@@ -687,8 +801,63 @@ const apiServices = {
                 }
                 throw new Error(response.message);
             } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.getLocalOrderTracking(orderId);
+                }
                 throw new Error(error.message || 'Failed to fetch order tracking');
             }
+        },
+
+        getLocalOrderTracking(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) {
+                throw new Error('Order not found');
+            }
+
+            // Generate mock tracking history based on order status
+            const trackingHistory = [];
+            const baseDate = new Date(order.created_at);
+
+            trackingHistory.push({
+                status: 'Order Placed',
+                description: 'Your order has been successfully placed.',
+                created_at: baseDate.toISOString()
+            });
+
+            if (order.status !== 'Cancelled') {
+                trackingHistory.push({
+                    status: 'Processing',
+                    description: 'Your order is being prepared.',
+                    created_at: new Date(baseDate.getTime() + 30 * 60000).toISOString()
+                });
+
+                if (order.status === 'Shipped' || order.status === 'Delivered') {
+                    trackingHistory.push({
+                        status: 'Shipped',
+                        description: 'Your order has been shipped and is on its way.',
+                        created_at: new Date(baseDate.getTime() + 24 * 60 * 60000).toISOString()
+                    });
+                }
+
+                if (order.status === 'Delivered') {
+                    trackingHistory.push({
+                        status: 'Delivered',
+                        description: 'Your order has been delivered successfully.',
+                        created_at: new Date(baseDate.getTime() + 72 * 60 * 60000).toISOString()
+                    });
+                }
+            } else {
+                trackingHistory.push({
+                    status: 'Cancelled',
+                    description: 'Your order has been cancelled.',
+                    created_at: new Date().toISOString()
+                });
+            }
+
+            return {
+                order,
+                trackingHistory
+            };
         }
     },
 
@@ -724,6 +893,121 @@ const apiServices = {
             }
         },
 
+        async getAllProducts() {
+            try {
+                const response = await apiClient.get(API_CONFIG.ENDPOINTS.ADMIN.PRODUCTS);
+
+                if (response.status === 'success') {
+                    return response.data.products;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return localProducts;
+                }
+                throw new Error(error.message || 'Failed to fetch products');
+            }
+        },
+
+        async getProductById(productId) {
+            try {
+                const endpoint = apiClient.replaceParams(API_CONFIG.ENDPOINTS.ADMIN.PRODUCT_BY_ID, { id: productId });
+                const response = await apiClient.get(endpoint);
+
+                if (response.status === 'success') {
+                    return response.data.product;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return localProducts.find(p => p.id === productId);
+                }
+                throw new Error(error.message || 'Failed to fetch product');
+            }
+        },
+
+        async createProduct(productData) {
+            try {
+                const response = await apiClient.post(API_CONFIG.ENDPOINTS.ADMIN.PRODUCTS, productData);
+
+                if (response.status === 'success') {
+                    return response.data.product;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    const newProduct = {
+                        id: generateProductId(),
+                        ...productData,
+                        created_at: new Date().toISOString()
+                    };
+                    localProducts.push(newProduct);
+                    return newProduct;
+                }
+                throw new Error(error.message || 'Failed to create product');
+            }
+        },
+
+        async updateProduct(productId, productData) {
+            try {
+                const endpoint = apiClient.replaceParams(API_CONFIG.ENDPOINTS.ADMIN.PRODUCT_BY_ID, { id: productId });
+                const response = await apiClient.put(endpoint, productData);
+
+                if (response.status === 'success') {
+                    return response.data.product;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    const productIndex = localProducts.findIndex(p => p.id === productId);
+                    if (productIndex !== -1) {
+                        localProducts[productIndex] = { ...localProducts[productIndex], ...productData };
+                        return localProducts[productIndex];
+                    }
+                    throw new Error('Product not found');
+                }
+                throw new Error(error.message || 'Failed to update product');
+            }
+        },
+
+        async deleteProduct(productId) {
+            try {
+                const endpoint = apiClient.replaceParams(API_CONFIG.ENDPOINTS.ADMIN.PRODUCT_BY_ID, { id: productId });
+                const response = await apiClient.delete(endpoint);
+
+                if (response.status === 'success') {
+                    return true;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    const productIndex = localProducts.findIndex(p => p.id === productId);
+                    if (productIndex !== -1) {
+                        localProducts.splice(productIndex, 1);
+                        return true;
+                    }
+                    throw new Error('Product not found');
+                }
+                throw new Error(error.message || 'Failed to delete product');
+            }
+        },
+
+        async getAllCustomers() {
+            try {
+                const response = await apiClient.get(API_CONFIG.ENDPOINTS.ADMIN.CUSTOMERS);
+
+                if (response.status === 'success') {
+                    return response.data.customers;
+                }
+                throw new Error(response.message);
+            } catch (error) {
+                if (error.message.includes('Backend not available')) {
+                    return this.getLocalCustomers();
+                }
+                throw new Error(error.message || 'Failed to fetch customers');
+            }
+        },
+
         getLocalDashboardStats() {
             const totalRevenue = orders.reduce((sum, order) =>
                 order.status !== 'Cancelled' ? sum + order.total_amount : sum, 0
@@ -739,6 +1023,35 @@ const apiServices = {
                 },
                 recentOrders: orders.slice(-5).reverse()
             };
+        },
+
+        getLocalCustomers() {
+            // Generate mock customer data from orders
+            const customerMap = new Map();
+            
+            orders.forEach(order => {
+                if (order.customer_email) {
+                    if (!customerMap.has(order.customer_email)) {
+                        customerMap.set(order.customer_email, {
+                            id: `cust-${order.customer_email.split('@')[0]}`,
+                            name: order.customer_name,
+                            email: order.customer_email,
+                            phone: order.customer_phone,
+                            total_orders: 0,
+                            total_spent: 0,
+                            created_at: order.created_at
+                        });
+                    }
+                    
+                    const customer = customerMap.get(order.customer_email);
+                    customer.total_orders += 1;
+                    if (order.status !== 'Cancelled') {
+                        customer.total_spent += order.total_amount;
+                    }
+                }
+            });
+
+            return Array.from(customerMap.values());
         }
     }
 };
@@ -774,6 +1087,7 @@ function showPage(pageName) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
+    
     if (pageName.startsWith('admin')) {
         const adminPage = document.getElementById('adminPage');
         if (adminPage) {
@@ -783,7 +1097,7 @@ function showPage(pageName) {
 
         switch (pageName) {
             case 'admin':
-                showAdminTab('overview'); // default tab
+                showAdminTab('overview');
                 break;
             case 'adminProducts':
                 showAdminTab('products');
@@ -794,9 +1108,13 @@ function showPage(pageName) {
             case 'adminCustomers':
                 showAdminTab('customers');
                 break;
+            case 'adminTracking':
+                showAdminTab('tracking');
+                break;
         }
         return;
     }
+    
     // Handle normal user pages
     const targetPage = document.getElementById(pageName + 'Page');
     if (targetPage) {
@@ -1359,101 +1677,231 @@ function showDashboardTab(tabName) {
 // Admin Functions
 async function renderAdminDashboard() {
     try {
-        const res = await apiClient.get('/admin/dashboard');
-        const { stats, recentOrders } = res.data;
+        const stats = await apiServices.admin.getDashboardStats();
 
-        document.getElementById('totalProducts').textContent = stats.totalProducts;
-        document.getElementById('totalOrders').textContent = stats.totalOrders;
-        document.getElementById('totalRevenue').textContent = `KSh ${stats.totalRevenue}`;
-        document.getElementById('pendingOrders').textContent = stats.pendingOrders;
+        document.getElementById('totalProducts').textContent = stats.stats.totalProducts;
+        document.getElementById('totalOrders').textContent = stats.stats.totalOrders;
+        document.getElementById('totalRevenue').textContent = formatPrice(stats.stats.totalRevenue);
+        document.getElementById('pendingOrders').textContent = stats.stats.pendingOrders;
 
-        const list = document.getElementById('recentOrdersList');
-        list.innerHTML = '';
-        recentOrders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('recent-order-item');
-            div.innerHTML = `
-                <strong>${order.customer_name}</strong><br>
-                Order #${order.id} - KSh ${order.total_amount}<br>
-                <small>${new Date(order.created_at).toLocaleString()}</small>
-            `;
-            list.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Dashboard Load Error:', err);
+        // Render recent orders
+        const container = document.getElementById('recentOrdersList');
+        if (container && stats.recentOrders) {
+            container.innerHTML = stats.recentOrders.map(order => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <span style="font-weight: 600;">#${order.id}</span>
+                        <span style="margin-left: 1rem; color: #6b7280;">${order.customer_name}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                        <span style="display: block; margin-top: 0.25rem; font-weight: 600;">${formatPrice(order.total_amount)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load admin dashboard:', error);
+        showNotification('Failed to load dashboard data', 'error');
     }
 }
 
 async function renderAdminProducts() {
     try {
-        const res = await apiClient.get('/admin/products');
-        const products = res.data.products;
+        const products = await apiServices.admin.getAllProducts();
         const container = document.getElementById('adminProductsList');
-        container.innerHTML = '';
+        if (!container) return;
 
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.classList.add('admin-product-card');
-            div.innerHTML = `
-                <img src="${product.image_url}" alt="${product.name}" />
-                <h4>${product.name}</h4>
-                <p>KSh ${product.price}</p>
-                <p>Stock: ${product.stock}</p>
-                <button onclick="editProduct('${product.id}')">Edit</button>
-                <button onclick="deleteProduct('${product.id}')">Delete</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Product Load Error:', err);
+        container.innerHTML = products.map(product => `
+            <div class="admin-product-card" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <img src="${product.image_url || product.image}" alt="${product.name}" 
+                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.375rem;" 
+                         onerror="this.src='https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300'">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0; font-weight: 600; color: #1f2937;">${product.name}</h4>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">ID: ${product.id}</p>
+                        <p style="margin: 0.25rem 0; font-weight: 600; color: #059669;">${formatPrice(product.price)}</p>
+                        <p style="margin: 0.25rem 0; color: ${product.stock <= 5 ? '#dc2626' : '#059669'};">
+                            Stock: ${product.stock} items
+                        </p>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">Category: ${product.category}</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button onclick="editProduct('${product.id}')" 
+                                style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                            Edit
+                        </button>
+                        <button onclick="deleteProduct('${product.id}')" 
+                                style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load admin products:', error);
+        showNotification('Failed to load products', 'error');
     }
 }
 
 async function renderAdminOrders() {
     try {
-        const res = await apiClient.get('/admin/orders');
-        const orders = res.data.orders;
+        const orders = await apiServices.orders.getAllOrders();
         const container = document.getElementById('adminOrdersList');
-        container.innerHTML = '';
+        if (!container) return;
 
-        orders.forEach(order => {
-            const div = document.createElement('div');
-            div.classList.add('order-card');
-            div.innerHTML = `
-                <strong>Order #${order.id}</strong> - ${order.status}<br>
-                <p>${order.customer_name} (${order.customer_email})</p>
-                <p>Total: KSh ${order.total_amount}</p>
-                <button onclick="showOrderDetails('${order.id}')">Details</button>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Orders Load Error:', err);
+        if (orders.length === 0) {
+            container.innerHTML = '<div class="empty-state">No orders found.</div>';
+            return;
+        }
+
+        container.innerHTML = orders.map(order => `
+            <div class="admin-order-card" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="margin: 0; font-weight: 600; color: #1f2937;">Order #${order.id}</h4>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            ${new Date(order.created_at).toLocaleDateString()} at ${new Date(order.created_at).toLocaleTimeString()}
+                        </p>
+                    </div>
+                    <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <p style="margin: 0.25rem 0;"><strong>Customer:</strong> ${order.customer_name}</p>
+                        <p style="margin: 0.25rem 0;"><strong>Email:</strong> ${order.customer_email}</p>
+                        <p style="margin: 0.25rem 0;"><strong>Phone:</strong> ${order.customer_phone}</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0.25rem 0;"><strong>Payment:</strong> ${order.payment_method?.toUpperCase()}</p>
+                        <p style="margin: 0.25rem 0;"><strong>Total:</strong> ${formatPrice(order.total_amount)}</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <strong>Items:</strong>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        ${order.items.map(item => `
+                            <li>${item.product_name} x ${item.quantity} - ${formatPrice(item.total_price)}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button onclick="showOrderDetails('${order.id}')" 
+                            style="padding: 0.5rem 1rem; background: #6b7280; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                        View Details
+                    </button>
+                    <select onchange="updateOrderStatus('${order.id}', this.value)" 
+                            style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                        <option value="">Change Status</option>
+                        <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                        <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                    <button onclick="trackOrderDetails('${order.id}')" 
+                            style="padding: 0.5rem 1rem; background: #059669; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                        Track Order
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load admin orders:', error);
+        showNotification('Failed to load orders', 'error');
     }
 }
 
 async function renderAdminCustomers() {
     try {
-        const res = await apiClient.get('/admin/customers');
-        const customers = res.data.customers;
-        const list = document.getElementById('customersList');
-        list.innerHTML = '';
+        const customers = await apiServices.admin.getAllCustomers();
+        const container = document.getElementById('customersList');
+        if (!container) return;
 
-        customers.forEach(customer => {
-            const div = document.createElement('div');
-            div.classList.add('customer-card');
-            div.innerHTML = `
-                <h4>${customer.name}</h4>
-                <p>Email: ${customer.email}</p>
-                <p>Phone: ${customer.phone}</p>
-                <p>Total Orders: ${customer.total_orders}</p>
-                <p>Total Spent: KSh ${customer.total_spent}</p>
-            `;
-            list.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Customer Load Error:', err);
+        if (customers.length === 0) {
+            container.innerHTML = '<div class="empty-state">No customers found.</div>';
+            return;
+        }
+
+        container.innerHTML = customers.map(customer => `
+            <div class="customer-card" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4 style="margin: 0; font-weight: 600; color: #1f2937;">${customer.name}</h4>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            <strong>Email:</strong> ${customer.email}
+                        </p>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            <strong>Phone:</strong> ${customer.phone || 'N/A'}
+                        </p>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            <strong>Joined:</strong> ${new Date(customer.created_at).toLocaleDateString()}
+                        </p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0.25rem 0; font-weight: 600; color: #059669;">
+                            ${customer.total_orders} Orders
+                        </p>
+                        <p style="margin: 0.25rem 0; font-weight: 600; color: #059669;">
+                            ${formatPrice(customer.total_spent)} Spent
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load customers:', error);
+        showNotification('Failed to load customers', 'error');
     }
+}
+
+async function renderAdminTracking() {
+    const container = document.getElementById('adminTrackingContent');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div style="background: white; border-radius: 0.5rem; padding: 1.5rem;">
+            <h3 style="margin: 0 0 1rem 0; color: #1f2937;">Order Tracking Management</h3>
+            
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Search Order by ID:
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="adminTrackingOrderId" placeholder="Enter Order ID (e.g., ORD123456)" 
+                           style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    <button onclick="adminTrackOrder()" 
+                            style="padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; white-space: nowrap;">
+                        Track Order
+                    </button>
+                </div>
+            </div>
+
+            <div id="adminTrackingResult"></div>
+
+            <div style="margin-top: 2rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">Quick Actions:</h4>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button onclick="showRecentOrders()" 
+                            style="padding: 0.5rem 1rem; background: #059669; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                        Show Recent Orders
+                    </button>
+                    <button onclick="showPendingOrders()" 
+                            style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                        Show Pending Orders
+                    </button>
+                    <button onclick="showShippedOrders()" 
+                            style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                        Show Shipped Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function showAdminTab(tabName) {
@@ -1519,6 +1967,269 @@ async function updateAdminStats() {
     } catch (error) {
         console.error('Failed to update admin stats:', error);
     }
+}
+
+// Admin Product Management Functions
+async function editProduct(productId) {
+    try {
+        const product = await apiServices.admin.getProductById(productId);
+        if (!product) {
+            showNotification('Product not found', 'error');
+            return;
+        }
+
+        const newName = prompt('Product Name:', product.name);
+        if (!newName) return;
+
+        const newPrice = prompt('Product Price (KSh):', product.price);
+        if (!newPrice || isNaN(newPrice)) return;
+
+        const newStock = prompt('Stock Quantity:', product.stock);
+        if (!newStock || isNaN(newStock)) return;
+
+        const newCategory = prompt('Category:', product.category);
+        if (!newCategory) return;
+
+        const newImageUrl = prompt('Image URL:', product.image_url || product.image);
+
+        const updatedData = {
+            name: newName,
+            price: parseFloat(newPrice),
+            stock: parseInt(newStock),
+            category: newCategory,
+            image_url: newImageUrl || product.image_url || product.image
+        };
+
+        await apiServices.admin.updateProduct(productId, updatedData);
+        showNotification('Product updated successfully!', 'success');
+        renderAdminProducts();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+async function deleteProduct(productId) {
+    try {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+
+        await apiServices.admin.deleteProduct(productId);
+        showNotification('Product deleted successfully!', 'success');
+        renderAdminProducts();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+async function addNewProduct() {
+    try {
+        const name = prompt('Product Name:');
+        if (!name) return;
+
+        const price = prompt('Product Price (KSh):');
+        if (!price || isNaN(price)) return;
+
+        const stock = prompt('Stock Quantity:');
+        if (!stock || isNaN(stock)) return;
+
+        const category = prompt('Category:');
+        if (!category) return;
+
+        const imageUrl = prompt('Image URL:', 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300');
+
+        const productData = {
+            name,
+            price: parseFloat(price),
+            stock: parseInt(stock),
+            category,
+            image_url: imageUrl
+        };
+
+        await apiServices.admin.createProduct(productData);
+        showNotification('Product added successfully!', 'success');
+        renderAdminProducts();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+// Admin Order Management Functions
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        if (!newStatus) return;
+
+        await apiServices.orders.updateOrderStatus(orderId, newStatus);
+        showNotification(`Order status updated to ${newStatus}!`, 'success');
+        renderAdminOrders();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+// Admin Tracking Functions
+async function adminTrackOrder() {
+    try {
+        const orderId = document.getElementById('adminTrackingOrderId').value.trim();
+        if (!orderId) {
+            showNotification('Please enter an order ID!', 'error');
+            return;
+        }
+
+        const trackingData = await apiServices.tracking.getOrderTracking(orderId);
+        displayAdminOrderTracking(trackingData);
+
+    } catch (error) {
+        document.getElementById('adminTrackingResult').innerHTML = `
+            <div class="empty-state">Order not found. Please check the order ID and try again.</div>
+        `;
+    }
+}
+
+function displayAdminOrderTracking(trackingData) {
+    const container = document.getElementById('adminTrackingResult');
+    if (!container) return;
+
+    const order = trackingData.order;
+    const trackingHistory = trackingData.trackingHistory;
+
+    container.innerHTML = `
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h4 style="margin: 0; font-weight: 600; color: #1f2937;">Order #${order.id}</h4>
+                    <p style="margin: 0.25rem 0; color: #6b7280;">
+                        Customer: ${order.customer_name} (${order.customer_email})
+                    </p>
+                    <p style="margin: 0.25rem 0; color: #6b7280;">
+                        Date: ${new Date(order.created_at).toLocaleDateString()}
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                    <p style="margin: 0.25rem 0; font-weight: 600;">${formatPrice(order.total_amount)}</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Order Items:</strong>
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    ${order.items.map(item => `
+                        <li>${item.product_name} x ${item.quantity} - ${formatPrice(item.total_price)}</li>
+                    `).join('')}
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Tracking History:</strong>
+                <div style="margin-top: 1rem;">
+                    ${trackingHistory.map(track => `
+                        <div style="display: flex; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6;">
+                            <div style="min-width: 120px; font-weight: 600; color: #059669;">
+                                ${track.status}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="color: #374151;">${track.description}</div>
+                                <div style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem;">
+                                    ${new Date(track.created_at).toLocaleDateString()} at ${new Date(track.created_at).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <select onchange="updateOrderStatus('${order.id}', this.value)" 
+                        style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    <option value="">Update Status</option>
+                    <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                    <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                    <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+                <button onclick="showOrderDetails('${order.id}')" 
+                        style="padding: 0.5rem 1rem; background: #6b7280; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
+                    View Full Details
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+async function showRecentOrders() {
+    try {
+        const orders = await apiServices.orders.getAllOrders();
+        const recentOrders = orders.slice(-10).reverse();
+        displayOrdersList(recentOrders, 'Recent Orders');
+    } catch (error) {
+        showNotification('Failed to load recent orders', 'error');
+    }
+}
+
+async function showPendingOrders() {
+    try {
+        const orders = await apiServices.orders.getAllOrders();
+        const pendingOrders = orders.filter(order => order.status === 'Processing');
+        displayOrdersList(pendingOrders, 'Pending Orders');
+    } catch (error) {
+        showNotification('Failed to load pending orders', 'error');
+    }
+}
+
+async function showShippedOrders() {
+    try {
+        const orders = await apiServices.orders.getAllOrders();
+        const shippedOrders = orders.filter(order => order.status === 'Shipped');
+        displayOrdersList(shippedOrders, 'Shipped Orders');
+    } catch (error) {
+        showNotification('Failed to load shipped orders', 'error');
+    }
+}
+
+function displayOrdersList(orders, title) {
+    const container = document.getElementById('adminTrackingResult');
+    if (!container) return;
+
+    if (orders.length === 0) {
+        container.innerHTML = `
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; margin-top: 1rem;">
+                <h4 style="margin: 0; color: #1f2937;">${title}</h4>
+                <div class="empty-state">No orders found.</div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; margin-top: 1rem;">
+            <h4 style="margin: 0 0 1rem 0; color: #1f2937;">${title} (${orders.length})</h4>
+            ${orders.map(order => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6;">
+                    <div>
+                        <span style="font-weight: 600; cursor: pointer;" onclick="adminTrackSpecificOrder('${order.id}')">
+                            #${order.id}
+                        </span>
+                        <span style="margin-left: 1rem; color: #6b7280;">${order.customer_name}</span>
+                        <span style="margin-left: 1rem; font-size: 0.875rem; color: #9ca3af;">
+                            ${new Date(order.created_at).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                        <span style="font-weight: 600;">${formatPrice(order.total_amount)}</span>
+                        <button onclick="adminTrackSpecificOrder('${order.id}')" 
+                                style="padding: 0.25rem 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">
+                            Track
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function adminTrackSpecificOrder(orderId) {
+    document.getElementById('adminTrackingOrderId').value = orderId;
+    await adminTrackOrder();
 }
 
 // Inquiry Functions
@@ -1695,7 +2406,7 @@ document.addEventListener('DOMContentLoaded', function () {
             phone: document.getElementById('inquiryPhone').value,
             subject: document.getElementById('inquirySubject').value,
             order_id: document.getElementById('inquiryOrderId').value || null,
-            message: document.getElementById('inquiryMessage').value
+            message:document.getElementById('inquiryMessage').value
         };
 
         await submitInquiry(inquiryData);
